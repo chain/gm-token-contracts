@@ -53,6 +53,17 @@ contract GMToken is ERC1363, Mintable, Pausable, Ownable, AccessControl {
     }
 
     /**
+     * @dev grant the MINTER_ROLE after minter contract is deployed
+     *
+     * Requirements:
+     *
+     * - the caller must have the `DEFAULT_ADMIN_ROLE`.
+     */
+    function grantMinterRole(address minter) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _grantRole(MINTER_ROLE, minter);
+    }
+
+    /**
      * @dev Triggers stopped state.
      *
      * Requirements:
