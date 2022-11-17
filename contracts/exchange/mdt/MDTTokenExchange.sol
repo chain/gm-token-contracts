@@ -9,26 +9,31 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "erc-payable-token/contracts/token/ERC1363/IERC1363Receiver.sol";
-import "./token/ERC677/IERC677Receiver.sol";
-import "./token/ERC677/ERC677.sol";
+import "../../token/ERC677/IERC677Receiver.sol";
+import "../../token/ERC677/ERC677.sol";
 
-contract GMTokenExchange is
-IERC1363Receiver,
-IERC677Receiver,
-ERC165,
-ReentrancyGuard,
-Ownable
+contract MDTTokenExchange is
+    IERC1363Receiver,
+    IERC677Receiver,
+    ERC165,
+    ReentrancyGuard,
+    Ownable
 {
     using ERC165Checker for address;
 
     IERC1363Upgradeable public gmToken;
     IERC677 public mdtToken;
-    IERC20 public xcnToken;
+
+    event TokensReceived(
+        address indexed operator,
+        address indexed from,
+        uint256 value,
+        bytes data
+    );
 
     constructor(
         IERC1363Upgradeable _gmToken,
-        IERC677 _mdtToken,
-        IERC20 _xcnToken
+        IERC677 _mdtToken
     ) {
         require(
             address(_gmToken) != address(0),
@@ -39,29 +44,31 @@ Ownable
             "GMTokenExchange: mdtToken is zero address"
         );
         require(
-            address(_xcnToken) != address(0),
-            "GMTokenExchange: xcnToken is zero address"
-        );
-        require(
             _gmToken.supportsInterface(type(IERC1363Upgradeable).interfaceId)
         );
         gmToken = _gmToken;
         mdtToken = _mdtToken;
-        xcnToken = _xcnToken;
     }
 
     function onTransferReceived(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external view override returns (bytes4) {
+        address operator,
+        address from,
+        uint256 value,
+        bytes calldata data
+    ) external override returns (bytes4) {
         require(
             msg.sender == address(gmToken),
             "ERC1363Payable: gmToken is not message sender"
         );
 
+        emit TokensReceived(operator, from, value, data);
+        _transferReceived(operator, from, value, data);
+
         return IERC1363Receiver.onTransferReceived.selector;
+    }
+
+    function _transferReceived(address, address, uint256, bytes memory) internal pure {
+        revert("MDTTokenExchange: _transferReceived not implemented");
     }
 
     function onTokenTransfer(
@@ -69,6 +76,7 @@ Ownable
         uint,
         bytes calldata
     ) external pure override returns (bool success) {
+        // TODO: add implementation
         return true;
     }
 

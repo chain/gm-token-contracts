@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "erc-payable-token/contracts/token/ERC1363/IERC1363Receiver.sol";
-import "./interfaces/Mintable.sol";
+import "../../interfaces/Mintable.sol";
 
 contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
