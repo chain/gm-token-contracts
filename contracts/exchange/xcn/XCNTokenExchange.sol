@@ -22,16 +22,16 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
         uint256 value,
         bytes data
     );
-    event SwapForGm(address sender, uint256 amount);
+    event ExchangeForGM(address sender, uint256 amount);
 
     constructor(Mintable _gmToken, IERC20 _xcnToken) {
         require(
             address(_gmToken) != address(0),
-            "XCNSwap: gmToken is zero address"
+            "XCNTokenExchange: gmToken is zero address"
         );
         require(
             address(_xcnToken) != address(0),
-            "XCNSwap: xcnToken is zero address"
+            "XCNTokenExchange: xcnToken is zero address"
         );
 
         gmToken = _gmToken;
@@ -44,7 +44,7 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
         uint256 value,
         bytes calldata data
     ) external override returns (bytes4) {
-        require(msg.sender == address(gmToken), "XCNSwap: Only accept GM token");
+        require(msg.sender == address(gmToken), "XCNTokenExchange: Only accept GM token");
         emit TokensReceived(operator, from, value, data);
         _transferReceived(operator, from, value, data);
         return IERC1363Receiver.onTransferReceived.selector;
@@ -52,14 +52,14 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
 
     function _transferReceived(address, address from, uint256 value, bytes memory) internal {
         gmToken.burn(value);
-        require(xcnToken.transfer(from, value), "XCNSwap: The transaction transfer XCN is reverted");
+        require(xcnToken.transfer(from, value), "XCNTokenExchange: The transaction transfer XCN is reverted");
     }
 
-    function swapForGm(uint256 amount) external whenNotPaused nonReentrant {
-        require(xcnToken.transferFrom(msg.sender, address(this), amount), "XCNSwap: The transaction transfer XCN is reverted");
+    function exchangeForGM(uint256 amount) external whenNotPaused nonReentrant {
+        require(xcnToken.transferFrom(msg.sender, address(this), amount), "XCNTokenExchange: The transaction transfer XCN is reverted");
         gmToken.mint(address(msg.sender), amount);
 
-        emit SwapForGm(msg.sender, amount);
+        emit ExchangeForGM(msg.sender, amount);
     }
 
     /**

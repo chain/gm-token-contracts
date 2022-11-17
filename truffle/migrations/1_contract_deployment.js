@@ -3,14 +3,14 @@ const { deployProxy } = require("@openzeppelin/truffle-upgrades");
 const GM = artifacts.require('GMToken');
 const GMUpgradeable = artifacts.require('GMTokenUpgradeable');
 const XCN = artifacts.require('XCNToken');
-const Swap = artifacts.require('XCNTokenExchange');
+const Exchange = artifacts.require('XCNTokenExchange');
 
 module.exports = (deployer, network, accounts) => {
     let admin = accounts[0]; // default admin of all upgradeable contracts
     let mdtAdmin = accounts[1];
     let gmAdmin = accounts[2];
     let xcnAdmin = accounts[3];
-    let swapAdmin = accounts[4];
+    let exchangeAdmin = accounts[4];
 
     let deployXcnContract = () => {
         return deployer.deploy(XCN, { from: xcnAdmin })
@@ -36,18 +36,18 @@ module.exports = (deployer, network, accounts) => {
             });
     };
 
-    let deploySwapContract = (gmInstance, xcnInstance) => {
-        return deployer.deploy(Swap, gmInstance.address, xcnInstance.address, { from: swapAdmin })
-            .then(swapInstance => {
-                console.log('Swap contract deployed: ', swapInstance.address);
-                return gmInstance.grantMinterRole(swapInstance.address, { from: gmAdmin })
+    let deployExchangeContract = (gmInstance, xcnInstance) => {
+        return deployer.deploy(Exchange, gmInstance.address, xcnInstance.address, { from: exchangeAdmin })
+            .then(exchangeInstance => {
+                console.log('Exchange contract deployed: ', exchangeInstance.address);
+                return gmInstance.grantMinterRole(exchangeInstance.address, { from: gmAdmin })
                     .then(authorizeTx => authorizeTx.tx)
                     .then(console.log) // authorizeTx
-                    .then(() => Promise.resolve(swapInstance));
+                    .then(() => Promise.resolve(exchangeInstance));
             });
     }
 
     deployGmContract()
         .then(gmInstance => deployXcnContract()
-            .then(xcnInstance => deploySwapContract(gmInstance, xcnInstance)));
+            .then(xcnInstance => deployExchangeContract(gmInstance, xcnInstance)));
 }

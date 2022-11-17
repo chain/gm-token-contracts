@@ -3,9 +3,9 @@ const truffleAssert = require("truffle-assertions");
 const GMUpgradeable = artifacts.require('GMTokenUpgradeable');
 const GM = artifacts.require('GMToken');
 const XCN = artifacts.require('XCNToken');
-const Swap = artifacts.require('XCNTokenExchange');
+const Exchange = artifacts.require('XCNTokenExchange');
 
-contract('Swap', (accounts) => {
+contract('Exchange', (accounts) => {
     const eth = web3.eth;
 
     let gmAdmin = accounts[2];
@@ -16,33 +16,33 @@ contract('Swap', (accounts) => {
     let mdtToken;
     let gmToken;
     let xcnToken;
-    let swapContract;
+    let exchangeContract;
 
     const xcnTransfer = async (from, to, amount) => {
-        let swapTx = await xcnToken.transfer(to, (Math.pow(10, 18) * amount).toString(), {from: from});
-        // console.log(swapTx);
-        return swapTx;
+        let exchangeTx = await xcnToken.transfer(to, (Math.pow(10, 18) * amount).toString(), {from: from});
+        // console.log(exchangeTx);
+        return exchangeTx;
     }
 
     const gmTransfer = async (from, to, amount) => {
-        let swapTx = await gmToken.transfer(to, (Math.pow(10, 18) * amount).toString(), {from: from});
-        // console.log(swapTx);
-        return swapTx;
+        let exchangeTx = await gmToken.transfer(to, (Math.pow(10, 18) * amount).toString(), {from: from});
+        // console.log(exchangeTx);
+        return exchangeTx;
     }
 
-    const swapGmForXcn = async (sender, amount) => {
-        let swapTx = await gmToken.transferAndCall(swapContract.address, (Math.pow(10, 18) * amount).toString(), {from: sender});
-        // console.log(swapTx);
-        return swapTx;
+    const exchangeGmForXcn = async (sender, amount) => {
+        let exchangeTx = await gmToken.transferAndCall(exchangeContract.address, (Math.pow(10, 18) * amount).toString(), {from: sender});
+        // console.log(exchangeTx);
+        return exchangeTx;
     }
 
-    const swapXcnForGm = async (sender, amount) => {
-        let approveTx = await xcnToken.approve(swapContract.address, (Math.pow(10, 18) * amount).toString(), {from: sender});
+    const exchangeXcnForGm = async (sender, amount) => {
+        let approveTx = await xcnToken.approve(exchangeContract.address, (Math.pow(10, 18) * amount).toString(), {from: sender});
         // console.log(approveTx);
-        let swapTx = await swapContract.swapForGm((Math.pow(10, 18) * amount).toString(), {from: sender});
-        // console.log(swapTx);
+        let exchangeTx = await exchangeContract.exchangeForGM((Math.pow(10, 18) * amount).toString(), {from: sender});
+        // console.log(exchangeTx);
 
-        return swapTx;
+        return exchangeTx;
     }
 
     const checkBalance = async (address) => {
@@ -62,14 +62,14 @@ contract('Swap', (accounts) => {
         gmToken = await GM.deployed();
         gmAdmin = await gmToken.owner();
         xcnToken = await XCN.deployed();
-        swapContract = await Swap.deployed();
+        exchangeContract = await Exchange.deployed();
     });
 
     it('GM should be able to transfer like other tokens', async () => {
         try {
             await gmTransfer(gmAdmin, user, 100);
-            // await eth.sendTransaction({ from: swapAdmin, to: swapContract.address, value: toWei('1', 'ether')});
-            await xcnTransfer(xcnAdmin, swapContract.address, 100);
+            // await eth.sendTransaction({ from: exchangeAdmin, to: exchangeContract.address, value: toWei('1', 'ether')});
+            await xcnTransfer(xcnAdmin, exchangeContract.address, 100);
         } catch (ex) {
             assert.ok(false, "Token transfer transaction is reverted");
         }
@@ -80,14 +80,14 @@ contract('Swap', (accounts) => {
 
     it('Burning GM should be rewarded with equivalent XCN', async () => {
         let userBalancesBefore = await checkBalance(user);
-        let contractBalancesBefore = await checkBalance(swapContract.address);
+        let contractBalancesBefore = await checkBalance(exchangeContract.address);
 
         let amount = 10;
-        let swapTx = await swapGmForXcn(user, amount);
-        // console.log(swapTx);
-        console.log(user, 'send', amount, 'GM to', swapContract.address, 'to swap XCN');
+        let exchangeTx = await exchangeGmForXcn(user, amount);
+        // console.log(exchangeTx);
+        console.log(user, 'send', amount, 'GM to', exchangeContract.address, 'to exchange XCN');
         let userBalancesAfter = await checkBalance(user);
-        let contractBalancesAfter = await checkBalance(swapContract.address);
+        let contractBalancesAfter = await checkBalance(exchangeContract.address);
 
         assert.equal(Number(userBalancesBefore[1]) - Number(userBalancesAfter[1]), Math.pow(10, 18) * amount, 'User should loss ' + amount + 'GM');
 
@@ -98,15 +98,15 @@ contract('Swap', (accounts) => {
         assert.equal(Number(contractBalancesBefore[2]) - Number(contractBalancesAfter[2]), Math.pow(10, 18) * amount, 'Contract should decrease ' + amount + 'XCN');
     });
 
-    it('Sending GM to Swap contract should be rewarded with equivalent newly-minted GM', async () => {
+    it('Sending GM to Exchange contract should be rewarded with equivalent newly-minted GM', async () => {
         let userBalancesBefore = await checkBalance(user);
-        let contractBalancesBefore = await checkBalance(swapContract.address);
+        let contractBalancesBefore = await checkBalance(exchangeContract.address);
 
         let amount = 5;
-        let swapTx = await swapXcnForGm(user, amount);
-        console.log(user, 'send', amount, 'XCN to', swapContract.address, 'to swap GM');
+        let exchangeTx = await exchangeXcnForGm(user, amount);
+        console.log(user, 'send', amount, 'XCN to', exchangeContract.address, 'to exchange GM');
         let userBalancesAfter = await checkBalance(user);
-        let contractBalancesAfter = await checkBalance(swapContract.address);
+        let contractBalancesAfter = await checkBalance(exchangeContract.address);
 
         assert.equal(Number(userBalancesBefore[2]) - Number(userBalancesAfter[2]), Math.pow(10, 18) * amount, 'User should loss ' + amount + 'XCN');
 
@@ -118,10 +118,10 @@ contract('Swap', (accounts) => {
     });
 
     it('Should not be able to burn GM if pre-deposited XCN is out of balance', async () => {
-        let contractBalancesBefore = await checkBalance(swapContract.address);
+        let contractBalancesBefore = await checkBalance(exchangeContract.address);
 
         let amount = 100;
-        await truffleAssert.reverts(swapGmForXcn(user, amount),
+        await truffleAssert.reverts(exchangeGmForXcn(user, amount),
             'ERC20: transfer amount exceeds balance'); // sometimes it reverts from ERC777
     });
 
@@ -129,42 +129,42 @@ contract('Swap', (accounts) => {
         let userBalancesBefore = await checkBalance(user);
 
         let amount = 10;
-        await truffleAssert.reverts(swapXcnForGm(user, amount),
+        await truffleAssert.reverts(exchangeXcnForGm(user, amount),
             'ERC20: transfer amount exceeds balance');
     });
 
-    it('Should be able to subscribe event emission when swapping XCN for GM', async () => {
+    it('Should be able to subscribe event emission when exchanging XCN for GM', async () => {
         let userBalancesBefore = await checkBalance(user);
-        let contractBalancesBefore = await checkBalance(swapContract.address);
+        let contractBalancesBefore = await checkBalance(exchangeContract.address);
 
         let amount = 5;
-        let swapTx = await swapXcnForGm(user, amount);
-        truffleAssert.eventEmitted(swapTx, 'SwapForGm');
+        let exchangeTx = await exchangeXcnForGm(user, amount);
+        truffleAssert.eventEmitted(exchangeTx, 'ExchangeForGM');
 
-        let nestedTx = await truffleAssert.createTransactionResult(gmToken, swapTx.tx); //.logs[0].returnValues;
+        let nestedTx = await truffleAssert.createTransactionResult(gmToken, exchangeTx.tx); //.logs[0].returnValues;
         truffleAssert.eventEmitted(nestedTx, 'TokenMinted');
-        console.log(user, 'send', amount, 'XCN to', swapContract.address, 'to swap GM');
+        console.log(user, 'send', amount, 'XCN to', exchangeContract.address, 'to exchange GM');
 
         let userBalancesAfter = await checkBalance(user);
-        let contractBalancesAfter = await checkBalance(swapContract.address);
+        let contractBalancesAfter = await checkBalance(exchangeContract.address);
     });
 
-    it('Should be able to subscribe nested event emission when swapping GM for XCN', async () => {
+    it('Should be able to subscribe nested event emission when exchanging GM for XCN', async () => {
         let userBalancesBefore = await checkBalance(user);
-        let contractBalancesBefore = await checkBalance(swapContract.address);
+        let contractBalancesBefore = await checkBalance(exchangeContract.address);
 
         let amount = 10;
-        let swapTx = await swapGmForXcn(user, amount);
-        // console.log(swapTx);
-        let nestedTx = await truffleAssert.createTransactionResult(gmToken, swapTx.tx);
+        let exchangeTx = await exchangeGmForXcn(user, amount);
+        // console.log(exchangeTx);
+        let nestedTx = await truffleAssert.createTransactionResult(gmToken, exchangeTx.tx);
         truffleAssert.eventEmitted(nestedTx, 'TokenBurnt', ev => {
             // console.log(ev);
             return ev.from === user;
         });
-        console.log(user, 'send', amount, 'GM to', swapContract.address, 'to swap XCN');
+        console.log(user, 'send', amount, 'GM to', exchangeContract.address, 'to exchange XCN');
 
         let userBalancesAfter = await checkBalance(user);
-        let contractBalancesAfter = await checkBalance(swapContract.address);
+        let contractBalancesAfter = await checkBalance(exchangeContract.address);
     });
 
 });
