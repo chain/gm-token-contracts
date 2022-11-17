@@ -3,15 +3,16 @@ pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "erc-payable-token/contracts/token/ERC1363/IERC1363Receiver.sol";
 import "../../interfaces/Mintable.sol";
 
-contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard, Pausable {
-    using SafeERC20 for IERC20;
+contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
+//    using SafeERC20 for IERC20;
 
     Mintable public gmToken;
     IERC20 public xcnToken;
@@ -27,7 +28,17 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
     event ExchangeForGM(address sender, uint256 amount);
     event XcnOutflowToggled(bool enabled);
 
-    constructor(Mintable _gmToken, IERC20 _xcnToken, bool xcnOutflowEnabled) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(Mintable _gmToken, IERC20 _xcnToken, bool xcnOutflowEnabled_) initializer public {
+        __ERC165_init();
+        __Ownable_init();
+        __ReentrancyGuard_init();
+        __Pausable_init();
+
         require(
             address(_gmToken) != address(0),
             "XCNTokenExchange: gmToken is zero address"
@@ -39,7 +50,7 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
 
         gmToken = _gmToken;
         xcnToken = _xcnToken;
-        _xcnOutflowEnabled = xcnOutflowEnabled;
+        _xcnOutflowEnabled = xcnOutflowEnabled_;
     }
 
     function toggleXcnOutflow(bool enabled) public onlyOwner {
@@ -117,7 +128,7 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
         public
         view
         virtual
-        override(ERC165)
+        override(ERC165Upgradeable)
         returns (bool)
     {
         return
