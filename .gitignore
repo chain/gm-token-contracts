@@ -62,3 +62,6 @@ credentials.js
 
 # Truffle output
 /truffle/build/*
+
+# OpenZeppelin files
+/.openzeppelin*
