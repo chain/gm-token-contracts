@@ -27,20 +27,6 @@ contract GMTokenUpgradeable is
     string private _symbol = "GM";
 
     /**
-     * @dev Emitted when `value` tokens are minted to an account (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event TokenMinted(address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when `value` tokens are burnt from an account (`from`).
-     *
-     * Note that `value` may be zero.
-     */
-    event TokenBurnt(address indexed from, uint256 value);
-
-    /**
      * @dev Emitted when the token name is changed to (`newName`)
      * and the token symbol is changed to (`newSymbol`).
      *
