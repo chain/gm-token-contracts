@@ -1,16 +1,15 @@
 const truffleAssert = require("truffle-assertions");
 // const MDT = artifacts.require('MDT');
+const GMUpgradeable = artifacts.require('GMTokenUpgradeable');
 const GM = artifacts.require('GMToken');
 const XCN = artifacts.require('XCNToken');
 const Swap = artifacts.require('XCNTokenExchange');
 
 contract('Swap', (accounts) => {
     const eth = web3.eth;
-    const {toWei} = web3.utils;
 
-    let gmAdmin; // = accounts[2];
+    let gmAdmin = accounts[2];
     let xcnAdmin = accounts[3];
-    let swapAdmin = accounts[4];
 
     let user = accounts[5];
 
