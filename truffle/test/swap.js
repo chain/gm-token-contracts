@@ -140,7 +140,28 @@ contract('Swap', (accounts) => {
         let amount = 5;
         let swapTx = await swapXcnForGm(user, amount);
         truffleAssert.eventEmitted(swapTx, 'SwapForGm');
+
+        let nestedTx = await truffleAssert.createTransactionResult(gmToken, swapTx.tx); //.logs[0].returnValues;
+        truffleAssert.eventEmitted(nestedTx, 'TokenMinted');
         console.log(user, 'send', amount, 'XCN to', swapContract.address, 'to swap GM');
+
+        let userBalancesAfter = await checkBalance(user);
+        let contractBalancesAfter = await checkBalance(swapContract.address);
+    });
+
+    it('Should be able to subscribe nested event emission when swapping GM for XCN', async () => {
+        let userBalancesBefore = await checkBalance(user);
+        let contractBalancesBefore = await checkBalance(swapContract.address);
+
+        let amount = 10;
+        let swapTx = await swapGmForXcn(user, amount);
+        // console.log(swapTx);
+        let nestedTx = await truffleAssert.createTransactionResult(gmToken, swapTx.tx);
+        truffleAssert.eventEmitted(nestedTx, 'TokenBurnt', ev => {
+            // console.log(ev);
+            return ev.from === user;
+        });
+        console.log(user, 'send', amount, 'GM to', swapContract.address, 'to swap XCN');
 
         let userBalancesAfter = await checkBalance(user);
         let contractBalancesAfter = await checkBalance(swapContract.address);
