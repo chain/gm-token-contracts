@@ -13,11 +13,11 @@ import "./token/ERC677/IERC677Receiver.sol";
 import "./token/ERC677/ERC677.sol";
 
 contract GMTokenExchange is
-    IERC1363Receiver,
-    IERC677Receiver,
-    ERC165,
-    ReentrancyGuard,
-    Ownable
+IERC1363Receiver,
+IERC677Receiver,
+ERC165,
+ReentrancyGuard,
+Ownable
 {
     using ERC165Checker for address;
 
@@ -51,11 +51,11 @@ contract GMTokenExchange is
     }
 
     function onTransferReceived(
-        address spender,
-        address sender,
-        uint256 amount,
-        bytes calldata data
-    ) external override returns (bytes4) {
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external view override returns (bytes4) {
         require(
             msg.sender == address(gmToken),
             "ERC1363Payable: gmToken is not message sender"
@@ -65,10 +65,10 @@ contract GMTokenExchange is
     }
 
     function onTokenTransfer(
-        address _sender,
-        uint _value,
-        bytes calldata _data
-    ) external override returns (bool success) {
+        address,
+        uint,
+        bytes calldata
+    ) external pure override returns (bool success) {
         return true;
     }
 
@@ -86,14 +86,14 @@ contract GMTokenExchange is
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC165)
-        returns (bool)
+    public
+    view
+    virtual
+    override(ERC165)
+    returns (bool)
     {
         return
-            interfaceId == type(IERC1363Receiver).interfaceId ||
-            super.supportsInterface(interfaceId);
+        interfaceId == type(IERC1363Receiver).interfaceId ||
+        super.supportsInterface(interfaceId);
     }
 }
