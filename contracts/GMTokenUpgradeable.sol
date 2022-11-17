@@ -3,13 +3,22 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./token/ERC1363/ERC1363.sol";
-import "./token/ERC1363/IERC1363.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "./token/ERC1363/ERC1363Upgradeable.sol";
+import "./interfaces/Mintable.sol";
 
-contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
+contract GMTokenUpgradeable is
+    Initializable,
+    ERC1363Upgradeable,
+    Mintable,
+    PausableUpgradeable,
+    OwnableUpgradeable,
+    AccessControlUpgradeable
+{
     uint256 public constant INITIAL_SUPPLY = 100000000 * 10**uint256(18);
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -39,11 +48,21 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
      */
     event TokenInformationUpdated(string newName, string newSymbol);
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     /**
      * @dev Sets INITIAL_SUPPLY initials tokens, grant the DEFAULT_ADMIN_ROLE,
      * PAUSER_ROLE and MINTER_ROLE to the caller.
      */
-    constructor() ERC20("", "") {
+    function initialize() public initializer {
+        __ERC20_init("", "");
+        __Pausable_init();
+        __Ownable_init();
+        __AccessControl_init();
+
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
@@ -87,9 +106,9 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
      * - `account` must have at least `amount` tokens.
      * - the caller must have the `MINTER_ROLE`.
      */
-    function burn(address from, uint256 amount) public onlyRole(MINTER_ROLE) {
-        _burn(from, amount);
-        emit TokenBurnt(from, amount);
+    function burn(uint256 amount) public override onlyRole(MINTER_ROLE) {
+        _burn(_msgSender(), amount);
+        emit TokenBurnt(tx.origin, amount);
     }
 
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
@@ -104,6 +123,7 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
      */
     function mint(address to, uint256 amount)
         public
+        override
         onlyRole(MINTER_ROLE)
         validRecipient(to)
     {
@@ -162,11 +182,11 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
         public
         view
         virtual
-        override(ERC1363, AccessControl)
+        override(ERC1363Upgradeable, AccessControlUpgradeable)
         returns (bool)
     {
         return
-            interfaceId == type(IERC1363).interfaceId ||
+            interfaceId == type(IERC1363Upgradeable).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 }
