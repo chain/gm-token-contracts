@@ -6,10 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/interfaces/IERC1363.sol";
 import "./token/ERC1363/ERC1363.sol";
-import "./token/ERC1363/IERC1363.sol";
+import "./interfaces/Mintable.sol";
 
-contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
+contract GMToken is ERC1363, Mintable, Pausable, Ownable, AccessControl {
     uint256 public constant INITIAL_SUPPLY = 100000000 * 10**uint256(18);
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -76,20 +77,18 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
     }
 
     /**
-     * @dev Destroys `amount` tokens from `account`, reducing the
+     * @dev Destroys `amount` tokens from _msgSender(), reducing the
      * total supply.
      *
      * Emits a {Transfer} event with `to` set to the zero address.
      *
      * Requirements:
      *
-     * - `account` cannot be the zero address.
-     * - `account` must have at least `amount` tokens.
      * - the caller must have the `MINTER_ROLE`.
      */
-    function burn(address from, uint256 amount) public onlyRole(MINTER_ROLE) {
-        _burn(from, amount);
-        emit TokenBurnt(from, amount);
+    function burn(uint256 amount) public override onlyRole(MINTER_ROLE) {
+        _burn(_msgSender(), amount);
+        emit TokenBurnt(tx.origin, amount);
     }
 
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
@@ -104,6 +103,7 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
      */
     function mint(address to, uint256 amount)
         public
+        override
         onlyRole(MINTER_ROLE)
         validRecipient(to)
     {

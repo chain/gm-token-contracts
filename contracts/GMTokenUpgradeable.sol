@@ -95,15 +95,13 @@ contract GMTokenUpgradeable is
     }
 
     /**
-     * @dev Destroys `amount` tokens from `account`, reducing the
+     * @dev Destroys `amount` tokens from _msgSender(), reducing the
      * total supply.
      *
      * Emits a {Transfer} event with `to` set to the zero address.
      *
      * Requirements:
      *
-     * - `account` cannot be the zero address.
-     * - `account` must have at least `amount` tokens.
      * - the caller must have the `MINTER_ROLE`.
      */
     function burn(uint256 amount) public override onlyRole(MINTER_ROLE) {
