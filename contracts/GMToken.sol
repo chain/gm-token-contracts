@@ -10,10 +10,12 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./token/ERC1363/ERC1363Upgradeable.sol";
+import "./interfaces/Mintable.sol";
 
 contract GMToken is
     Initializable,
     ERC1363Upgradeable,
+    Mintable,
     PausableUpgradeable,
     OwnableUpgradeable,
     AccessControlUpgradeable
@@ -51,13 +53,14 @@ contract GMToken is
         _unpause();
     }
 
-    function burn(address from, uint256 amount) public onlyRole(MINTER_ROLE) {
-        _burn(from, amount);
-        emit TokenBurnt(from, amount);
+    function burn(uint256 amount) public override onlyRole(MINTER_ROLE) {
+        _burn(_msgSender(), amount);
+        emit TokenBurnt(tx.origin, amount);
     }
 
     function mint(address to, uint256 amount)
         public
+        override
         onlyRole(MINTER_ROLE)
         validRecipient(to)
     {
