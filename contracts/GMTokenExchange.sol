@@ -3,12 +3,12 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./token/ERC1363/IERC1363Upgradeable.sol";
-import "./token/ERC1363/IERC1363Receiver.sol";
+import "erc-payable-token/contracts/token/ERC1363/IERC1363Receiver.sol";
 import "./token/ERC677/IERC677Receiver.sol";
 import "./token/ERC677/ERC677.sol";
 
