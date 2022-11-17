@@ -16,6 +16,8 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
     Mintable public gmToken;
     IERC20 public xcnToken;
 
+    bool private _xcnOutflowEnabled;
+
     event TokensReceived(
         address indexed operator,
         address indexed from,
@@ -23,8 +25,9 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
         bytes data
     );
     event ExchangeForGM(address sender, uint256 amount);
+    event XcnOutflowToggled(bool enabled);
 
-    constructor(Mintable _gmToken, IERC20 _xcnToken) {
+    constructor(Mintable _gmToken, IERC20 _xcnToken, bool xcnOutflowEnabled) {
         require(
             address(_gmToken) != address(0),
             "XCNTokenExchange: gmToken is zero address"
@@ -36,6 +39,20 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
 
         gmToken = _gmToken;
         xcnToken = _xcnToken;
+        _xcnOutflowEnabled = xcnOutflowEnabled;
+    }
+
+    function toggleXcnOutflow(bool enabled) public onlyOwner {
+        _xcnOutflowEnabled = enabled;
+
+        emit XcnOutflowToggled(enabled);
+    }
+
+    /**
+     * @dev Returns whether it is enabled to exchange GM for XCN
+     */
+    function xcnOutflowEnabled() public view returns (bool) {
+        return _xcnOutflowEnabled;
     }
 
     function onTransferReceived(
@@ -44,6 +61,7 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
         uint256 value,
         bytes calldata data
     ) external override returns (bytes4) {
+        require(_xcnOutflowEnabled, "XCNTokenExchange: It's disabled to exchange GM for XCN");
         require(msg.sender == address(gmToken), "XCNTokenExchange: Only accept GM token");
         emit TokensReceived(operator, from, value, data);
         _transferReceived(operator, from, value, data);
@@ -52,24 +70,24 @@ contract XCNTokenExchange is IERC1363Receiver, ERC165, Ownable, ReentrancyGuard,
 
     function _transferReceived(address, address from, uint256 value, bytes memory) internal {
         gmToken.burn(value);
-        require(xcnToken.transfer(from, value), "XCNTokenExchange: The transaction transfer XCN is reverted");
+        require(xcnToken.transfer(from, value), "XCNTokenExchange: The transaction transfers XCN is reverted");
     }
 
     function exchangeForGM(uint256 amount) external whenNotPaused nonReentrant {
-        require(xcnToken.transferFrom(msg.sender, address(this), amount), "XCNTokenExchange: The transaction transfer XCN is reverted");
+        require(xcnToken.transferFrom(msg.sender, address(this), amount), "XCNTokenExchange: The transaction transfers XCN is reverted");
         gmToken.mint(address(msg.sender), amount);
 
         emit ExchangeForGM(msg.sender, amount);
     }
 
     /**
-     * @notice It allows the owner to recover tokens sent to the contract by mistake
+     * @notice It allows the owner to recover tokens sent to the contract by mistake, and withdraw XCN if outflow is disabled
      * @param _token: token address
      * @param _amount: token amount
      * @dev Callable by owner
      */
     function recoverToken(IERC20 _token, uint256 _amount) external onlyOwner {
-        require(_token.transfer(owner(), _amount) == true);
+        require(_token.transfer(owner(), _amount), "XCNTokenExchange: The transfer transaction is reverted");
     }
 
     /**

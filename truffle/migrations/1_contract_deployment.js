@@ -37,7 +37,7 @@ module.exports = (deployer, network, accounts) => {
     };
 
     let deployExchangeContract = (gmInstance, xcnInstance) => {
-        return deployer.deploy(Exchange, gmInstance.address, xcnInstance.address, { from: exchangeAdmin })
+        return deployer.deploy(Exchange, gmInstance.address, xcnInstance.address, true, { from: exchangeAdmin })
             .then(exchangeInstance => {
                 console.log('Exchange contract deployed: ', exchangeInstance.address);
                 return gmInstance.grantMinterRole(exchangeInstance.address, { from: gmAdmin })
