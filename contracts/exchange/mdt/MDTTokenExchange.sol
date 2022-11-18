@@ -4,9 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC1363.sol";
-import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -16,9 +14,7 @@ import "../../token/ERC677/IERC677.sol";
 
 contract MDTTokenExchange is
     Initializable,
-    IERC1363Receiver,
     IERC677Receiver,
-    ERC165Upgradeable,
     ReentrancyGuardUpgradeable,
     OwnableUpgradeable,
     PausableUpgradeable
@@ -28,20 +24,11 @@ contract MDTTokenExchange is
     IERC1363 public gmToken;
     IERC677 public mdtToken;
 
-    bool private _mdtOutflowEnabled;
-
-    event GMTokensReceived(
-        address indexed operator,
-        address indexed from,
-        uint256 value,
-        bytes data
-    );
     event MDTTokenReceived(
         address from,
         uint256 value,
         bytes data
     );
-    event MDTOutflowToggled(bool enabled);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -52,7 +39,6 @@ contract MDTTokenExchange is
         IERC1363 _gmToken,
         IERC677 _mdtToken
     ) initializer public {
-        __ERC165_init();
         __Ownable_init();
         __ReentrancyGuard_init();
         __Pausable_init();
@@ -70,42 +56,6 @@ contract MDTTokenExchange is
         );
         gmToken = _gmToken;
         mdtToken = _mdtToken;
-        _mdtOutflowEnabled = false;
-    }
-
-    function toggleMdtOutflow(bool enabled) public onlyOwner {
-        _mdtOutflowEnabled = enabled;
-
-        emit MDTOutflowToggled(enabled);
-    }
-
-    /**
-     * @dev Returns whether it is enabled to exchange GM for MDT
-     */
-    function mdtOutflowEnabled() public view returns (bool) {
-        return _mdtOutflowEnabled;
-    }
-
-    function onTransferReceived(
-        address spender,
-        address sender,
-        uint256 amount,
-        bytes calldata data
-    ) external override returns (bytes4) {
-        require(
-            msg.sender == address(gmToken),
-            "ERC1363Payable: gmToken is not message sender"
-        );
-
-        _gmTokenReceived(spender, sender, amount, data);
-
-        return IERC1363Receiver.onTransferReceived.selector;
-    }
-
-    function _gmTokenReceived(address spender, address sender, uint256 amount, bytes memory data) internal whenNotPaused nonReentrant {
-        require(_mdtOutflowEnabled, "MDTTokenExchange: It's disabled to exchange GM for MDT");
-
-        emit GMTokensReceived(spender, sender, amount, data);
     }
 
     function onTokenTransfer(
@@ -121,7 +71,7 @@ contract MDTTokenExchange is
     }
 
     function _mdtTokenReceived(address from, uint256 amount, bytes memory data) internal whenNotPaused nonReentrant {
-        gmToken.transfer(address(from), amount);
+        gmToken.transfer(from, amount);
 
         emit MDTTokenReceived(from, amount, data);
     }
@@ -154,20 +104,5 @@ contract MDTTokenExchange is
         _unpause();
 
         emit Unpaused(msg.sender);
-    }
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC165Upgradeable)
-        returns (bool)
-    {
-        return
-            interfaceId == type(IERC1363Receiver).interfaceId ||
-            super.supportsInterface(interfaceId);
     }
 }

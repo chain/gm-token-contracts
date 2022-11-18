@@ -216,10 +216,4 @@ contract('Exchange', (accounts) => {
         assert.equal(Number(contractBalancesAfter.MDT) - Number(contractBalancesBefore.MDT), Math.pow(10, 18) * amount, 'Contract should increase ' + amount + 'XCN');
     });
 
-    it('Should not be able to swap GM for MDT at this moment', async () => {
-        let amount = 10;
-        await truffleAssert.reverts(exchangeGmForMdt(user, amount),
-            'MDTTokenExchange: It\'s disabled to exchange GM for MDT');
-    });
-
 });
