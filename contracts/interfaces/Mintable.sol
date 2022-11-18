@@ -16,6 +16,14 @@ interface Mintable {
      */
     event TokenBurnt(address indexed from, uint256 value);
 
+    /**
+     * @dev Emitted when `minter` is granted access.
+     *
+     */
+    event MinterRoleGranted(address indexed minter);
+
     function burn(uint256 amount) external;
     function mint(address to, uint256 amount) external;
+
+    function grantMinterRole(address minter) external;
 }
