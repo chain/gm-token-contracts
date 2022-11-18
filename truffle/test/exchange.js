@@ -1,5 +1,5 @@
 const truffleAssert = require("truffle-assertions");
-// const MDT = artifacts.require('MDT');
+const MDT = artifacts.require('MDTToken');
 const GMUpgradeable = artifacts.require('GMTokenUpgradeable');
 const GM = artifacts.require('GMToken');
 const XCN = artifacts.require('XCNToken');
@@ -11,7 +11,7 @@ contract('Exchange', (accounts) => {
     let gmAdmin = accounts[2];
     let xcnAdmin = accounts[3];
 
-    let user = accounts[5];
+    let user = accounts[6];
 
     let mdtToken;
     let gmToken;
