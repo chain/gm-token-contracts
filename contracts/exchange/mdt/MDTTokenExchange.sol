@@ -3,17 +3,17 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "erc-payable-token/contracts/token/ERC1363/IERC1363Receiver.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363ReceiverUpgradeable.sol";
 import "../../token/ERC677/IERC677Receiver.sol";
 import "../../token/ERC677/ERC677.sol";
 
 contract MDTTokenExchange is
-    IERC1363Receiver,
+    IERC1363ReceiverUpgradeable,
     IERC677Receiver,
     ERC165,
     ReentrancyGuard,
@@ -51,9 +51,9 @@ contract MDTTokenExchange is
     }
 
     function onTransferReceived(
-        address operator,
-        address from,
-        uint256 value,
+        address spender,
+        address sender,
+        uint256 amount,
         bytes calldata data
     ) external override returns (bytes4) {
         require(
@@ -61,10 +61,10 @@ contract MDTTokenExchange is
             "ERC1363Payable: gmToken is not message sender"
         );
 
-        emit TokensReceived(operator, from, value, data);
-        _transferReceived(operator, from, value, data);
+        emit TokensReceived(spender, sender, amount, data);
+        _transferReceived(spender, sender, amount, data);
 
-        return IERC1363Receiver.onTransferReceived.selector;
+        return IERC1363ReceiverUpgradeable.onTransferReceived.selector
     }
 
     function _transferReceived(address, address, uint256, bytes memory) internal pure {
@@ -94,14 +94,14 @@ contract MDTTokenExchange is
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC165)
-    returns (bool)
+        public
+        view
+        virtual
+        override(ERC165)
+        returns (bool)
     {
         return
-        interfaceId == type(IERC1363Receiver).interfaceId ||
-        super.supportsInterface(interfaceId);
+            interfaceId == type(IERC1363ReceiverUpgradeable).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 }
