@@ -25,7 +25,7 @@ contract MDTTokenExchange is
     IERC677 public mdtToken;
 
     event MDTTokenReceived(
-        address from,
+        address indexed from,
         uint256 value,
         bytes data
     );
