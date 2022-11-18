@@ -5,17 +5,15 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
 import "./token/ERC1363/ERC1363Upgradeable.sol";
-import "./token/ERC1363/IERC1363Upgradeable.sol";
 
 contract GMTokenUpgradeable is
     Initializable,
     ERC1363Upgradeable,
     PausableUpgradeable,
-    OwnableUpgradeable,
     AccessControlUpgradeable
 {
     using SafeMathUpgradeable for uint256;
@@ -62,7 +60,6 @@ contract GMTokenUpgradeable is
     function initialize() public initializer {
         __ERC20_init("", "");
         __Pausable_init();
-        __Ownable_init();
         __AccessControl_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -137,17 +134,17 @@ contract GMTokenUpgradeable is
     }
 
     /**
-     * @dev Owner can update token information here.
+     * @dev Admin can update token information here.
      *
      * It is often useful to conceal the actual token association, until
      * the token operations, like central issuance or reissuance have been completed.
      *
-     * This function allows the token owner to rename the token after the operations
+     * This function allows the token admin to rename the token after the operations
      * have been completed and then point the audience to use the token contract.
      */
     function setTokenInformation(string calldata name_, string calldata symbol_)
         public
-        onlyOwner
+        onlyRole(DEFAULT_ADMIN_ROLE)
     {
         _name = name_;
         _symbol = symbol_;
@@ -170,13 +167,16 @@ contract GMTokenUpgradeable is
     }
 
     /**
-     * @notice It allows the owner to recover tokens sent to the contract by mistake
+     * @notice It allows the admin to recover tokens sent to the contract by mistake
      * @param _token: token address
      * @param _amount: token amount
-     * @dev Callable by owner
+     * @dev Callable by admin
      */
-    function recoverToken(address _token, uint256 _amount) external onlyOwner {
-        require(IERC20(_token).transfer(owner(), _amount) == true);
+    function recoverToken(address _token, uint256 _amount)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(IERC20(_token).transfer(_msgSender(), _amount) == true);
     }
 
     /**

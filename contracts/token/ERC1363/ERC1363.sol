@@ -5,10 +5,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-
-import "./IERC1363.sol";
-import "./IERC1363Receiver.sol";
-import "./IERC1363Spender.sol";
+import "@openzeppelin/contracts/interfaces/IERC1363.sol";
+import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
+import "@openzeppelin/contracts/interfaces/IERC1363Spender.sol";
 
 /**
  * @title ERC1363
@@ -231,7 +230,7 @@ abstract contract ERC1363 is ERC20, IERC1363, ERC165 {
     }
 
     /**
-     * @dev Internal function to invoke {IERC1363Receiver-onApprovalReceived} on a target address
+     * @dev Internal function to invoke {IERC1363Spender-onApprovalReceived} on a target address
      *  The call is not executed if the target address is not a contract
      * @param spender address The address which will spend the funds
      * @param amount uint256 The amount of tokens to be spent

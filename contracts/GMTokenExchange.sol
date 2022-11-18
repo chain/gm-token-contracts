@@ -7,13 +7,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./token/ERC1363/IERC1363Upgradeable.sol";
-import "./token/ERC1363/IERC1363Receiver.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363ReceiverUpgradeable.sol";
 import "./token/ERC677/IERC677Receiver.sol";
 import "./token/ERC677/ERC677.sol";
 
 contract GMTokenExchange is
-    IERC1363Receiver,
+    IERC1363ReceiverUpgradeable,
     IERC677Receiver,
     ERC165,
     ReentrancyGuard,
@@ -61,7 +61,7 @@ contract GMTokenExchange is
             "ERC1363Payable: gmToken is not message sender"
         );
 
-        return IERC1363Receiver.onTransferReceived.selector;
+        return IERC1363ReceiverUpgradeable.onTransferReceived.selector;
     }
 
     function onTokenTransfer(
@@ -93,7 +93,7 @@ contract GMTokenExchange is
         returns (bool)
     {
         return
-            interfaceId == type(IERC1363Receiver).interfaceId ||
+            interfaceId == type(IERC1363ReceiverUpgradeable).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 }

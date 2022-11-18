@@ -4,13 +4,12 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/interfaces/IERC1363.sol";
 import "./token/ERC1363/ERC1363.sol";
-import "./token/ERC1363/IERC1363.sol";
 
-contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
+contract GMToken is ERC1363, Pausable, AccessControl {
     using SafeMath for uint256;
 
     string private _name = "Geometric Token";
@@ -120,17 +119,17 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
     }
 
     /**
-     * @dev Owner can update token information here.
+     * @dev Admin can update token information here.
      *
      * It is often useful to conceal the actual token association, until
      * the token operations, like central issuance or reissuance have been completed.
      *
-     * This function allows the token owner to rename the token after the operations
+     * This function allows the token admin to rename the token after the operations
      * have been completed and then point the audience to use the token contract.
      */
     function setTokenInformation(string calldata name_, string calldata symbol_)
         public
-        onlyOwner
+        onlyRole(DEFAULT_ADMIN_ROLE)
     {
         _name = name_;
         _symbol = symbol_;
@@ -153,13 +152,16 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
     }
 
     /**
-     * @notice It allows the owner to recover tokens sent to the contract by mistake
+     * @notice It allows the admin to recover tokens sent to the contract by mistake
      * @param _token: token address
      * @param _amount: token amount
-     * @dev Callable by owner
+     * @dev Callable by admin
      */
-    function recoverToken(address _token, uint256 _amount) external onlyOwner {
-        require(IERC20(_token).transfer(owner(), _amount) == true);
+    function recoverToken(address _token, uint256 _amount)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(IERC20(_token).transfer(_msgSender(), _amount) == true);
     }
 
     /**
