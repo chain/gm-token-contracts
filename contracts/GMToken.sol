@@ -13,13 +13,13 @@ import "./interfaces/Mintable.sol";
 contract GMToken is ERC1363, Mintable, Pausable, AccessControl {
 	using SafeMath for uint256;
 
+    string private _name = "Geometric Token";
+    string private _symbol = "GM";
+
     uint256 public constant INITIAL_SUPPLY = 1000000000 * 10**uint256(18);
     uint256 public constant MAX_SUPPLY = 68895442185 * (10**uint256(18));
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-
-    string private _name = "Geometric Token";
-    string private _symbol = "GM";
 
     /**
      * @dev Emitted when the token name is changed to (`newName`)
@@ -80,6 +80,7 @@ contract GMToken is ERC1363, Mintable, Pausable, AccessControl {
      * @dev Destroys `amount` tokens from _msgSender(), reducing the
      * total supply.
      *
+     * Emits a {TokenBurnt} event with `from` set to msg.sender and `value` set to the amount to be burnt
      * Emits a {Transfer} event with `to` set to the zero address.
      *
      * Requirements:
@@ -94,6 +95,7 @@ contract GMToken is ERC1363, Mintable, Pausable, AccessControl {
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.
      *
+     * Emits a {TokenMinted} event with `to` set to token recipient and `value` set to the amount to be minted
      * Emits a {Transfer} event with `from` set to the zero address.
      *
      * Requirements:

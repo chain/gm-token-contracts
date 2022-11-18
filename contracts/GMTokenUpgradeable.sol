@@ -97,6 +97,7 @@ contract GMTokenUpgradeable is
      * @dev Destroys `amount` tokens from _msgSender(), reducing the
      * total supply.
      *
+     * Emits a {TokenBurnt} event with `from` set to msg.sender and `value` set to the amount to be burnt
      * Emits a {Transfer} event with `to` set to the zero address.
      *
      * Requirements:
@@ -111,6 +112,7 @@ contract GMTokenUpgradeable is
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.
      *
+     * Emits a {TokenMinted} event with `to` set to token recipient and `value` set to the amount to be minted
      * Emits a {Transfer} event with `from` set to the zero address.
      *
      * Requirements:
