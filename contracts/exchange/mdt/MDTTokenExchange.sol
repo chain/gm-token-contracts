@@ -3,23 +3,25 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/interfaces/IERC1363.sol";
 import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "../../token/ERC677/IERC677Receiver.sol";
-import "../../token/ERC677/ERC677.sol";
+import "../../token/ERC677/IERC677.sol";
 
 contract MDTTokenExchange is
+    Initializable,
     IERC1363Receiver,
     IERC677Receiver,
-    ERC165,
-    ReentrancyGuard,
-    Ownable
+    ERC165Upgradeable,
+    ReentrancyGuardUpgradeable,
+    OwnableUpgradeable
 {
-    using ERC165Checker for address;
+    using ERC165CheckerUpgradeable for address;
 
     IERC1363 public gmToken;
     IERC677 public mdtToken;
@@ -39,11 +41,20 @@ contract MDTTokenExchange is
     );
     event MDTOutflowToggled(bool enabled);
 
-    constructor(
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize (
         IERC1363 _gmToken,
         IERC677 _mdtToken
-    ) {
-        require(
+    ) initializer public {
+        __Ownable_init();
+        __ReentrancyGuard_init();
+//        __Pausable_init();
+
+    require(
             address(_gmToken) != address(0),
             "GMTokenExchange: gmToken is zero address"
         );
@@ -129,7 +140,7 @@ contract MDTTokenExchange is
         public
         view
         virtual
-        override(ERC165)
+        override(ERC165Upgradeable)
         returns (bool)
     {
         return

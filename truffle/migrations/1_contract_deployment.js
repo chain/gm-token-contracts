@@ -46,7 +46,7 @@ module.exports = (deployer, network, accounts) => {
     };
 
     let deployMDTExchangeContract = (gmInstance, mdtInstance) => {
-        return deployer.deploy(MDTExchange, gmInstance.address, mdtInstance.address, { from: mdtExchangeAdmin })
+        return deployProxy(MDTExchange, [ gmInstance.address, mdtInstance.address ], { deployer })
             .then(exchangeInstance => {
                 console.log('MDT Exchange contract deployed: ', exchangeInstance.address);
                 return Promise.resolve(exchangeInstance);
