@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/interfaces/IERC1363.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -18,8 +18,9 @@ contract MDTTokenExchange is
     OwnableUpgradeable,
     PausableUpgradeable
 {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    IERC1363 public gmToken;
+    IERC20Upgradeable public gmToken;
     IERC677 public mdtToken;
 
     event MDTTokenReceived(
@@ -34,23 +35,20 @@ contract MDTTokenExchange is
     }
 
     function initialize (
-        IERC1363 _gmToken,
+        IERC20Upgradeable _gmToken,
         IERC677 _mdtToken
     ) initializer public {
         __Ownable_init();
         __ReentrancyGuard_init();
         __Pausable_init();
 
-    require(
+        require(
             address(_gmToken) != address(0),
             "GMTokenExchange: gmToken is zero address"
         );
         require(
             address(_mdtToken) != address(0),
             "GMTokenExchange: mdtToken is zero address"
-        );
-        require(
-            _gmToken.supportsInterface(type(IERC1363).interfaceId)
         );
         gmToken = _gmToken;
         mdtToken = _mdtToken;
@@ -69,7 +67,7 @@ contract MDTTokenExchange is
     }
 
     function _mdtTokenReceived(address from, uint256 amount, bytes memory data) internal whenNotPaused nonReentrant {
-        gmToken.transfer(from, amount);
+        gmToken.safeTransfer(from, amount);
 
         emit MDTTokenReceived(from, amount, data);
     }
@@ -80,8 +78,8 @@ contract MDTTokenExchange is
      * @param _amount: token amount
      * @dev Callable by owner
      */
-    function recoverToken(IERC20 _token, uint256 _amount) external onlyOwner {
-        require(_token.transfer(owner(), _amount), "MDTTokenExchange: The transfer transaction is reverted");
+    function recoverToken(IERC20Upgradeable _token, uint256 _amount) external onlyOwner {
+        _token.safeTransfer(owner(), _amount);
     }
 
     /**

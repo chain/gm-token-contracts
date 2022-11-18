@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -12,10 +12,10 @@ import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 import "../../interfaces/Mintable.sol";
 
 contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
-//    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     Mintable public gmToken;
-    IERC20 public xcnToken;
+    IERC20Upgradeable public xcnToken;
 
     bool private _xcnOutflowEnabled;
 
@@ -33,7 +33,7 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
         _disableInitializers();
     }
 
-    function initialize(Mintable _gmToken, IERC20 _xcnToken, bool xcnOutflowEnabled_) initializer public {
+    function initialize(Mintable _gmToken, IERC20Upgradeable _xcnToken, bool xcnOutflowEnabled_) initializer public {
         __ERC165_init();
         __Ownable_init();
         __ReentrancyGuard_init();
@@ -80,13 +80,13 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
 
     function _gmTokenReceived(address operator, address from, uint256 value, bytes memory data) internal whenNotPaused nonReentrant {
         gmToken.burn(value);
-        require(xcnToken.transfer(from, value), "XCNTokenExchange: The transaction transfers XCN is reverted");
+        xcnToken.safeTransfer(from, value);
 
         emit GMTokenReceived(operator, from, value, data);
     }
 
     function exchangeForGM(uint256 amount) external whenNotPaused nonReentrant {
-        require(xcnToken.transferFrom(msg.sender, address(this), amount), "XCNTokenExchange: The transaction transfers XCN is reverted");
+        xcnToken.safeTransferFrom(msg.sender, address(this), amount);
         gmToken.mint(address(msg.sender), amount);
 
         emit ExchangeForGM(msg.sender, amount);
@@ -98,8 +98,8 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
      * @param _amount: token amount
      * @dev Callable by owner
      */
-    function recoverToken(IERC20 _token, uint256 _amount) external onlyOwner {
-        require(_token.transfer(owner(), _amount), "XCNTokenExchange: The transfer transaction is reverted");
+    function recoverToken(IERC20Upgradeable _token, uint256 _amount) external onlyOwner {
+        _token.safeTransfer(owner(), _amount);
     }
 
     /**
