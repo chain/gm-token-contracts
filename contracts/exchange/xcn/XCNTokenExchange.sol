@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeabl
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "erc-payable-token/contracts/token/ERC1363/IERC1363Receiver.sol";
+import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 import "../../interfaces/Mintable.sol";
 
 contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
