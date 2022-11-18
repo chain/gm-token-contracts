@@ -14,7 +14,7 @@ abstract contract ERC677 is ERC20, IERC677 {
     * @param _value uint256 The amount to be transferred.
     * @param _data bytes The extra data to be passed to the receiving contract.
     */
-    function transferAndCall(address _to, uint256 _value, bytes calldata _data) public returns (bool success) {
+    function transferAndCall(address _to, uint256 _value, bytes memory _data) public returns (bool success) {
         require(super.transfer(_to, _value));
         emit ERC677Transfer(msg.sender, _to, _value, _data);
         if (isContract(_to)) {
@@ -25,7 +25,7 @@ abstract contract ERC677 is ERC20, IERC677 {
 
     // PRIVATE
 
-    function contractFallback(address _to, uint256 _value, bytes calldata _data) private {
+    function contractFallback(address _to, uint256 _value, bytes memory _data) private {
         IERC677Receiver receiver = IERC677Receiver(_to);
         require(receiver.onTokenTransfer(msg.sender, _value, _data));
     }

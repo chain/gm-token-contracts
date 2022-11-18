@@ -39,6 +39,12 @@ contract('Exchange', (accounts) => {
         return exchangeTx;
     }
 
+    const exchangeMdtForGm = async (sender, amount) => {
+        let exchangeTx = await mdtToken.transferAndCall(mdtExchangeContract.address, (Math.pow(10, 18) * amount).toString(), 0x0, {from: sender});
+        // console.log(exchangeTx);
+        return exchangeTx;
+    }
+
     const exchangeGmForXcn = async (sender, amount) => {
         let exchangeTx = await gmToken.transferAndCall(xcnExchangeContract.address, (Math.pow(10, 18) * amount).toString(), {from: sender});
         // console.log(exchangeTx);
@@ -183,6 +189,26 @@ contract('Exchange', (accounts) => {
 
         let userBalancesAfter = await checkBalance(user);
         let contractBalancesAfter = await checkBalance(xcnExchangeContract.address);
+    });
+
+    it('Should be able to swapping MDT for equivalent pre-deposited GM', async () => {
+
+        let userBalancesBefore = await checkBalance(user);
+        let contractBalancesBefore = await checkBalance(mdtExchangeContract.address);
+
+        let amount = 10;
+        let exchangeTx = await exchangeMdtForGm(user, amount);
+        console.log(user, 'send', amount, 'MDT to', mdtExchangeContract.address, 'to exchange GM');
+        let userBalancesAfter = await checkBalance(user);
+        let contractBalancesAfter = await checkBalance(mdtExchangeContract.address);
+
+        assert.equal(Number(userBalancesBefore.MDT) - Number(userBalancesAfter.MDT), Math.pow(10, 18) * amount, 'User should loss ' + amount + 'XCN');
+
+        assert.equal(Number(userBalancesAfter.GM) - Number(userBalancesBefore.GM), Math.pow(10, 18) * amount, 'User should earn ' + amount + 'GM');
+
+        assert.equal(Number(contractBalancesBefore.GM) - Number(contractBalancesAfter.GM), Math.pow(10, 18) * amount, 'Contract should not have any changes on GM balance');
+
+        assert.equal(Number(contractBalancesAfter.MDT) - Number(contractBalancesBefore.MDT), Math.pow(10, 18) * amount, 'Contract should increase ' + amount + 'XCN');
     });
 
 });

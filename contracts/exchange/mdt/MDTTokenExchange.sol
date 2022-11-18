@@ -30,6 +30,7 @@ contract MDTTokenExchange is
         uint256 value,
         bytes data
     );
+    event ExchangeForGM(address sender, uint256 amount);
 
     constructor(
         IERC1363Upgradeable _gmToken,
@@ -62,22 +63,30 @@ contract MDTTokenExchange is
         );
 
         emit TokensReceived(spender, sender, amount, data);
-        _transferReceived(spender, sender, amount, data);
+        _gmTransferReceived(spender, sender, amount, data);
 
         return IERC1363ReceiverUpgradeable.onTransferReceived.selector;
     }
 
-    function _transferReceived(address, address, uint256, bytes memory) internal pure {
+    function _gmTransferReceived(address, address, uint256, bytes memory) internal pure {
         revert("MDTTokenExchange: _transferReceived not implemented");
     }
 
     function onTokenTransfer(
-        address,
-        uint,
-        bytes calldata
-    ) external pure override returns (bool success) {
-        // TODO: add implementation
+        address sender,
+        uint amount,
+        bytes calldata data
+    ) external override returns (bool success) {
+        require(msg.sender == address(mdtToken), "MDTTokenExchange: Only accept MDT token");
+        emit TokensReceived(sender, sender, amount, data);
+        _mdtTransferReceived(sender, amount, data);
         return true;
+    }
+
+    function _mdtTransferReceived(address from, uint256 amount, bytes memory) internal {
+        gmToken.transfer(address(from), amount);
+
+        emit ExchangeForGM(from, amount);
     }
 
     /**
