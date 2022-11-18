@@ -45,6 +45,12 @@ contract('Exchange', (accounts) => {
         return exchangeTx;
     }
 
+    const exchangeGmForMdt = async (sender, amount) => {
+        let exchangeTx = await gmToken.transferAndCall(mdtExchangeContract.address, (Math.pow(10, 18) * amount).toString(), {from: sender});
+        // console.log(exchangeTx);
+        return exchangeTx;
+    }
+
     const exchangeGmForXcn = async (sender, amount) => {
         let exchangeTx = await gmToken.transferAndCall(xcnExchangeContract.address, (Math.pow(10, 18) * amount).toString(), {from: sender});
         // console.log(exchangeTx);
@@ -192,7 +198,6 @@ contract('Exchange', (accounts) => {
     });
 
     it('Should be able to swapping MDT for equivalent pre-deposited GM', async () => {
-
         let userBalancesBefore = await checkBalance(user);
         let contractBalancesBefore = await checkBalance(mdtExchangeContract.address);
 
@@ -209,6 +214,12 @@ contract('Exchange', (accounts) => {
         assert.equal(Number(contractBalancesBefore.GM) - Number(contractBalancesAfter.GM), Math.pow(10, 18) * amount, 'Contract should not have any changes on GM balance');
 
         assert.equal(Number(contractBalancesAfter.MDT) - Number(contractBalancesBefore.MDT), Math.pow(10, 18) * amount, 'Contract should increase ' + amount + 'XCN');
+    });
+
+    it('Should not be able to swap GM for MDT at this moment', async () => {
+        let amount = 10;
+        await truffleAssert.reverts(exchangeGmForMdt(user, amount),
+            'MDTTokenExchange: It\'s disabled to exchange GM for MDT');
     });
 
 });

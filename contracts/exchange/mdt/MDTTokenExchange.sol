@@ -24,6 +24,8 @@ contract MDTTokenExchange is
     IERC1363 public gmToken;
     IERC677 public mdtToken;
 
+    bool private _mdtOutflowEnabled;
+
     event GMTokensReceived(
         address indexed operator,
         address indexed from,
@@ -35,6 +37,7 @@ contract MDTTokenExchange is
         uint256 value,
         bytes data
     );
+    event MDTOutflowToggled(bool enabled);
 
     constructor(
         IERC1363 _gmToken,
@@ -53,6 +56,20 @@ contract MDTTokenExchange is
         );
         gmToken = _gmToken;
         mdtToken = _mdtToken;
+        _mdtOutflowEnabled = false;
+    }
+
+    function toggleMdtOutflow(bool enabled) public onlyOwner {
+        _mdtOutflowEnabled = enabled;
+
+        emit MDTOutflowToggled(enabled);
+    }
+
+    /**
+     * @dev Returns whether it is enabled to exchange GM for MDT
+     */
+    function mdtOutflowEnabled() public view returns (bool) {
+        return _mdtOutflowEnabled;
     }
 
     function onTransferReceived(
@@ -71,8 +88,8 @@ contract MDTTokenExchange is
         return IERC1363Receiver.onTransferReceived.selector;
     }
 
-    function _gmTokenReceived(address spender, address sender, uint256 amount, bytes memory data) internal pure {
-        revert("MDTTokenExchange: _transferReceived not implemented");
+    function _gmTokenReceived(address spender, address sender, uint256 amount, bytes memory data) internal {
+        require(_mdtOutflowEnabled, "MDTTokenExchange: It's disabled to exchange GM for MDT");
 
         emit GMTokensReceived(spender, sender, amount, data);
     }

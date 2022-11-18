@@ -26,7 +26,7 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
         bytes data
     );
     event ExchangeForGM(address sender, uint256 amount);
-    event XcnOutflowToggled(bool enabled);
+    event XCNOutflowToggled(bool enabled);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -56,7 +56,7 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
     function toggleXcnOutflow(bool enabled) public onlyOwner {
         _xcnOutflowEnabled = enabled;
 
-        emit XcnOutflowToggled(enabled);
+        emit XCNOutflowToggled(enabled);
     }
 
     /**
