@@ -21,32 +21,33 @@ contract('Exchange', (accounts) => {
     let mdtExchangeContract;
     let xcnExchangeContract;
 
-    const gmTransfer = async (from, to, amount) => {
-        let exchangeTx = await gmToken.transfer(to, (Math.pow(10, 18) * amount).toString(), {from: from});
+    const tokenTransfer = async (token, from, to, amount) => {
+        let senderBalanceBefore = await token.balanceOf(from);
+        let recipientBalanceBefore = await token.balanceOf(to);
+        let exchangeTx = await token.transfer(to, (Math.pow(10, 18) * amount).toString(), {from: from});
         // console.log(exchangeTx);
+        let senderBalanceAfter = await token.balanceOf(from);
+        let recipientBalanceAfter = await token.balanceOf(to);
+        // console.log(Number(senderBalanceBefore) - Number(senderBalanceAfter), amount, Number(recipientBalanceAfter) - Number(recipientBalanceBefore));
+        // assert.equal(Number(senderBalanceBefore) - Number(senderBalanceAfter), Math.pow(10, 18) * amount, 'Sender should loss ' + amount); // gas fee consumed
+        assert.equal(Number(recipientBalanceAfter) - Number(recipientBalanceBefore), Math.pow(10, 18) * amount, 'Recipient should gain ' + amount);
         return exchangeTx;
+    }
+
+    const gmTransfer = async (from, to, amount) => {
+        return tokenTransfer(gmToken, from, to, amount);
     }
 
     const mdtTransfer = async (from, to, amount) => {
-        let exchangeTx = await mdtToken.transfer(to, (Math.pow(10, 18) * amount).toString(), {from: from});
-        // console.log(exchangeTx);
-        return exchangeTx;
+        return tokenTransfer(mdtToken, from, to, amount);
     }
 
     const xcnTransfer = async (from, to, amount) => {
-        let exchangeTx = await xcnToken.transfer(to, (Math.pow(10, 18) * amount).toString(), {from: from});
-        // console.log(exchangeTx);
-        return exchangeTx;
+        return tokenTransfer(xcnToken, from, to, amount);
     }
 
     const exchangeMdtForGm = async (sender, amount) => {
         let exchangeTx = await mdtToken.transferAndCall(mdtExchangeContract.address, (Math.pow(10, 18) * amount).toString(), 0x0, {from: sender});
-        // console.log(exchangeTx);
-        return exchangeTx;
-    }
-
-    const exchangeGmForMdt = async (sender, amount) => {
-        let exchangeTx = await gmToken.transferAndCall(mdtExchangeContract.address, (Math.pow(10, 18) * amount).toString(), {from: sender});
         // console.log(exchangeTx);
         return exchangeTx;
     }
@@ -103,9 +104,6 @@ contract('Exchange', (accounts) => {
         } catch (ex) {
             assert.ok(false, "Token transfer transaction is reverted");
         }
-
-        let gmBalance = await gmToken.balanceOf(user);
-        assert.ok(gmBalance.toString() === (Math.pow(10, 18) * 100).toString(), 'Balance is exactly the same as what user is transferred');
     });
 
     it('Burning GM should be rewarded with equivalent XCN', async () => {
