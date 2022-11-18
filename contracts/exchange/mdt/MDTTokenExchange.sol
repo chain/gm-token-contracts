@@ -133,7 +133,7 @@ contract MDTTokenExchange is
      * @dev Callable by owner
      */
     function recoverToken(IERC20 _token, uint256 _amount) external onlyOwner {
-        require(_token.transfer(owner(), _amount) == "MDTTokenExchange: The transfer transaction is reverted");
+        require(_token.transfer(owner(), _amount), "MDTTokenExchange: The transfer transaction is reverted");
     }
 
     /**
