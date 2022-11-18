@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "../../token/ERC677/IERC677Receiver.sol";
 import "../../token/ERC677/IERC677.sol";
@@ -19,7 +20,8 @@ contract MDTTokenExchange is
     IERC677Receiver,
     ERC165Upgradeable,
     ReentrancyGuardUpgradeable,
-    OwnableUpgradeable
+    OwnableUpgradeable,
+    PausableUpgradeable
 {
     using ERC165CheckerUpgradeable for address;
 
@@ -50,9 +52,10 @@ contract MDTTokenExchange is
         IERC1363 _gmToken,
         IERC677 _mdtToken
     ) initializer public {
+        __ERC165_init();
         __Ownable_init();
         __ReentrancyGuard_init();
-//        __Pausable_init();
+        __Pausable_init();
 
     require(
             address(_gmToken) != address(0),
@@ -99,7 +102,7 @@ contract MDTTokenExchange is
         return IERC1363Receiver.onTransferReceived.selector;
     }
 
-    function _gmTokenReceived(address spender, address sender, uint256 amount, bytes memory data) internal {
+    function _gmTokenReceived(address spender, address sender, uint256 amount, bytes memory data) internal whenNotPaused nonReentrant {
         require(_mdtOutflowEnabled, "MDTTokenExchange: It's disabled to exchange GM for MDT");
 
         emit GMTokensReceived(spender, sender, amount, data);
@@ -117,7 +120,7 @@ contract MDTTokenExchange is
         return true;
     }
 
-    function _mdtTokenReceived(address from, uint256 amount, bytes memory data) internal {
+    function _mdtTokenReceived(address from, uint256 amount, bytes memory data) internal whenNotPaused nonReentrant {
         gmToken.transfer(address(from), amount);
 
         emit MDTTokenReceived(from, amount, data);
@@ -131,6 +134,26 @@ contract MDTTokenExchange is
      */
     function recoverToken(IERC20 _token, uint256 _amount) external onlyOwner {
         require(_token.transfer(owner(), _amount) == true);
+    }
+
+    /**
+     * @notice called by the admin to pause, triggers stopped state
+     * @dev Callable by admin or operator
+     */
+    function pause() external whenNotPaused onlyOwner {
+        _pause();
+
+        emit Paused(msg.sender);
+    }
+
+    /**
+     * @notice called by the admin to unpause, returns to normal state
+     * Reset genesis state. Once paused, the rounds would need to be kickstarted by genesis
+     */
+    function unpause() external whenPaused onlyOwner {
+        _unpause();
+
+        emit Unpaused(msg.sender);
     }
 
     /**

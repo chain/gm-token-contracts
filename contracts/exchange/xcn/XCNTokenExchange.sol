@@ -78,7 +78,7 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
         return IERC1363Receiver.onTransferReceived.selector;
     }
 
-    function _gmTokenReceived(address operator, address from, uint256 value, bytes memory data) internal {
+    function _gmTokenReceived(address operator, address from, uint256 value, bytes memory data) internal whenNotPaused nonReentrant {
         gmToken.burn(value);
         require(xcnToken.transfer(from, value), "XCNTokenExchange: The transaction transfers XCN is reverted");
 
