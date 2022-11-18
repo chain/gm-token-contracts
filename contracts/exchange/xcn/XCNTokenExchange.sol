@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeabl
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "erc-payable-token/contracts/token/ERC1363/IERC1363Receiver.sol";
+import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 import "../../interfaces/Mintable.sol";
 
 contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
@@ -19,14 +19,14 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
 
     bool private _xcnOutflowEnabled;
 
-    event TokensReceived(
+    event GMTokenReceived(
         address indexed operator,
         address indexed from,
         uint256 value,
         bytes data
     );
     event ExchangeForGM(address sender, uint256 amount);
-    event XcnOutflowToggled(bool enabled);
+    event XCNOutflowToggled(bool enabled);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -56,7 +56,7 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
     function toggleXcnOutflow(bool enabled) public onlyOwner {
         _xcnOutflowEnabled = enabled;
 
-        emit XcnOutflowToggled(enabled);
+        emit XCNOutflowToggled(enabled);
     }
 
     /**
@@ -74,14 +74,15 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
     ) external override returns (bytes4) {
         require(_xcnOutflowEnabled, "XCNTokenExchange: It's disabled to exchange GM for XCN");
         require(msg.sender == address(gmToken), "XCNTokenExchange: Only accept GM token");
-        emit TokensReceived(operator, from, value, data);
-        _transferReceived(operator, from, value, data);
+        _gmTokenReceived(operator, from, value, data);
         return IERC1363Receiver.onTransferReceived.selector;
     }
 
-    function _transferReceived(address, address from, uint256 value, bytes memory) internal {
+    function _gmTokenReceived(address operator, address from, uint256 value, bytes memory data) internal whenNotPaused nonReentrant {
         gmToken.burn(value);
         require(xcnToken.transfer(from, value), "XCNTokenExchange: The transaction transfers XCN is reverted");
+
+        emit GMTokenReceived(operator, from, value, data);
     }
 
     function exchangeForGM(uint256 amount) external whenNotPaused nonReentrant {
