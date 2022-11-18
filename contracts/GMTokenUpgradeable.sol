@@ -6,8 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
 import "./token/ERC1363/ERC1363Upgradeable.sol";
 import "./interfaces/Mintable.sol";
 
@@ -16,15 +17,17 @@ contract GMTokenUpgradeable is
     ERC1363Upgradeable,
     Mintable,
     PausableUpgradeable,
-    OwnableUpgradeable,
     AccessControlUpgradeable
 {
-    uint256 public constant INITIAL_SUPPLY = 100000000 * 10**uint256(18);
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    using SafeMathUpgradeable for uint256;
 
     string private _name = "Geometric Token";
     string private _symbol = "GM";
+
+    uint256 public constant INITIAL_SUPPLY = 1000000000 * 10**uint256(18);
+    uint256 public constant MAX_SUPPLY = 68895442185 * (10**uint256(18));
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /**
      * @dev Emitted when the token name is changed to (`newName`)
@@ -46,7 +49,6 @@ contract GMTokenUpgradeable is
     function initialize() public initializer {
         __ERC20_init("", "");
         __Pausable_init();
-        __Ownable_init();
         __AccessControl_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -113,7 +115,7 @@ contract GMTokenUpgradeable is
      *
      * Requirements:
      *
-     * - `account` cannot be the zero address.
+     * - `to` cannot be the zero address.
      * - the caller must have the `MINTER_ROLE`.
      */
     function mint(address to, uint256 amount)
@@ -122,23 +124,26 @@ contract GMTokenUpgradeable is
         onlyRole(MINTER_ROLE)
         validRecipient(to)
     {
-        // check if amount + totalSupply < MAX_SUPPLY
+        require(
+            totalSupply().add(amount) <= MAX_SUPPLY,
+            "GMTokenUpgradeable: Mint amount exceeds max supply"
+        );
         _mint(to, amount);
         emit TokenMinted(to, amount);
     }
 
     /**
-     * @dev Owner can update token information here.
+     * @dev Admin can update token information here.
      *
      * It is often useful to conceal the actual token association, until
      * the token operations, like central issuance or reissuance have been completed.
      *
-     * This function allows the token owner to rename the token after the operations
+     * This function allows the token admin to rename the token after the operations
      * have been completed and then point the audience to use the token contract.
      */
     function setTokenInformation(string calldata name_, string calldata symbol_)
         public
-        onlyOwner
+        onlyRole(DEFAULT_ADMIN_ROLE)
     {
         _name = name_;
         _symbol = symbol_;
@@ -161,13 +166,16 @@ contract GMTokenUpgradeable is
     }
 
     /**
-     * @notice It allows the owner to recover tokens sent to the contract by mistake
+     * @notice It allows the admin to recover tokens sent to the contract by mistake
      * @param _token: token address
      * @param _amount: token amount
-     * @dev Callable by owner
+     * @dev Callable by admin
      */
-    function recoverToken(address _token, uint256 _amount) external onlyOwner {
-        require(IERC20(_token).transfer(owner(), _amount) == true);
+    function recoverToken(address _token, uint256 _amount)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(IERC20(_token).transfer(_msgSender(), _amount) == true);
     }
 
     /**

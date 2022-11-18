@@ -3,11 +3,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "erc-payable-token/contracts/token/ERC1363/IERC1363Receiver.sol";
-import "erc-payable-token/contracts/token/ERC1363/IERC1363Spender.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363ReceiverUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363SpenderUpgradeable.sol";
 
 /**
  * @title ERC1363Upgradeable
@@ -200,7 +200,7 @@ abstract contract ERC1363Upgradeable is
     }
 
     /**
-     * @dev Internal function to invoke {IERC1363Receiver-onTransferReceived} on a target address
+     * @dev Internal function to invoke {IERC1363ReceiverUpgradeable-onTransferReceived} on a target address
      *  The call is not executed if the target address is not a contract
      * @param sender address Representing the previous owner of the given token amount
      * @param recipient address Target address that will receive the tokens
@@ -219,14 +219,16 @@ abstract contract ERC1363Upgradeable is
         }
 
         try
-            IERC1363Receiver(recipient).onTransferReceived(
+            IERC1363ReceiverUpgradeable(recipient).onTransferReceived(
                 _msgSender(),
                 sender,
                 amount,
                 data
             )
         returns (bytes4 retval) {
-            return retval == IERC1363Receiver.onTransferReceived.selector;
+            return
+                retval ==
+                IERC1363ReceiverUpgradeable.onTransferReceived.selector;
         } catch (bytes memory reason) {
             if (reason.length == 0) {
                 revert(
@@ -242,7 +244,7 @@ abstract contract ERC1363Upgradeable is
     }
 
     /**
-     * @dev Internal function to invoke {IERC1363Receiver-onApprovalReceived} on a target address
+     * @dev Internal function to invoke {IERC1363SpenderUpgradeable-onApprovalReceived} on a target address
      *  The call is not executed if the target address is not a contract
      * @param spender address The address which will spend the funds
      * @param amount uint256 The amount of tokens to be spent
@@ -259,13 +261,15 @@ abstract contract ERC1363Upgradeable is
         }
 
         try
-            IERC1363Spender(spender).onApprovalReceived(
+            IERC1363SpenderUpgradeable(spender).onApprovalReceived(
                 _msgSender(),
                 amount,
                 data
             )
         returns (bytes4 retval) {
-            return retval == IERC1363Spender.onApprovalReceived.selector;
+            return
+                retval ==
+                IERC1363SpenderUpgradeable.onApprovalReceived.selector;
         } catch (bytes memory reason) {
             if (reason.length == 0) {
                 revert(

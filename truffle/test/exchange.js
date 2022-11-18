@@ -60,7 +60,6 @@ contract('Exchange', (accounts) => {
     beforeEach('Basic setup', async () => {
         // mdtToken = await MDT.deployed();
         gmToken = await GM.deployed();
-        gmAdmin = await gmToken.owner();
         xcnToken = await XCN.deployed();
         exchangeContract = await Exchange.deployed();
     });

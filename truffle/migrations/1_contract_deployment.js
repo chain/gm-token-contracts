@@ -18,12 +18,9 @@ module.exports = (deployer, network, accounts) => {
             // deployProxy(GMUpgradeable, [], { deployer })
             .then(gmInstance => {
                 console.log('GM token deployed: ', gmInstance.address);
-                return gmInstance.owner()
-                    .then(gmOwner => {
-                        gmAdmin = gmOwner;
-                        return gmInstance.balanceOf(gmOwner)
-                            .then(gmBalance => console.log('GM Owner', gmOwner, 'has', gmBalance.toString().slice(0, -18), 'GM'))
-                    }).then(() => Promise.resolve(gmInstance));
+                return gmInstance.balanceOf(gmAdmin)
+                    .then(gmBalance => console.log('GM Owner', gmAdmin, 'has', gmBalance.toString().slice(0, -18), 'GM'))
+                    .then(() => Promise.resolve(gmInstance));
             });
     };
 
