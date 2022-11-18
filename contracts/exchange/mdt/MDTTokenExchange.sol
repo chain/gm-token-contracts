@@ -7,13 +7,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC1363ReceiverUpgradeable.sol";
+import "@openzeppelin/contracts/interfaces/IERC1363.sol";
+import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 import "../../token/ERC677/IERC677Receiver.sol";
 import "../../token/ERC677/ERC677.sol";
 
 contract MDTTokenExchange is
-    IERC1363ReceiverUpgradeable,
+    IERC1363Receiver,
     IERC677Receiver,
     ERC165,
     ReentrancyGuard,
@@ -21,7 +21,7 @@ contract MDTTokenExchange is
 {
     using ERC165Checker for address;
 
-    IERC1363Upgradeable public gmToken;
+    IERC1363 public gmToken;
     IERC677 public mdtToken;
 
     event TokensReceived(
@@ -33,7 +33,7 @@ contract MDTTokenExchange is
     event ExchangeForGM(address sender, uint256 amount);
 
     constructor(
-        IERC1363Upgradeable _gmToken,
+        IERC1363 _gmToken,
         IERC677 _mdtToken
     ) {
         require(
@@ -45,7 +45,7 @@ contract MDTTokenExchange is
             "GMTokenExchange: mdtToken is zero address"
         );
         require(
-            _gmToken.supportsInterface(type(IERC1363Upgradeable).interfaceId)
+            _gmToken.supportsInterface(type(IERC1363).interfaceId)
         );
         gmToken = _gmToken;
         mdtToken = _mdtToken;
@@ -65,7 +65,7 @@ contract MDTTokenExchange is
         emit TokensReceived(spender, sender, amount, data);
         _gmTransferReceived(spender, sender, amount, data);
 
-        return IERC1363ReceiverUpgradeable.onTransferReceived.selector;
+        return IERC1363Receiver.onTransferReceived.selector;
     }
 
     function _gmTransferReceived(address, address, uint256, bytes memory) internal pure {
@@ -110,7 +110,7 @@ contract MDTTokenExchange is
         returns (bool)
     {
         return
-            interfaceId == type(IERC1363ReceiverUpgradeable).interfaceId ||
+            interfaceId == type(IERC1363Receiver).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 }
