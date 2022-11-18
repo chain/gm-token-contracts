@@ -64,7 +64,7 @@ contract MDTTokenExchange is
         emit TokensReceived(spender, sender, amount, data);
         _transferReceived(spender, sender, amount, data);
 
-        return IERC1363ReceiverUpgradeable.onTransferReceived.selector
+        return IERC1363ReceiverUpgradeable.onTransferReceived.selector;
     }
 
     function _transferReceived(address, address, uint256, bytes memory) internal pure {
