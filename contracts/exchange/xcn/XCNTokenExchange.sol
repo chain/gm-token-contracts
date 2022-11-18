@@ -19,7 +19,7 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
 
     bool private _xcnOutflowEnabled;
 
-    event TokensReceived(
+    event GMTokenReceived(
         address indexed operator,
         address indexed from,
         uint256 value,
@@ -74,14 +74,15 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
     ) external override returns (bytes4) {
         require(_xcnOutflowEnabled, "XCNTokenExchange: It's disabled to exchange GM for XCN");
         require(msg.sender == address(gmToken), "XCNTokenExchange: Only accept GM token");
-        emit TokensReceived(operator, from, value, data);
-        _transferReceived(operator, from, value, data);
+        _gmTokenReceived(operator, from, value, data);
         return IERC1363Receiver.onTransferReceived.selector;
     }
 
-    function _transferReceived(address, address from, uint256 value, bytes memory) internal {
+    function _gmTokenReceived(address operator, address from, uint256 value, bytes memory data) internal {
         gmToken.burn(value);
         require(xcnToken.transfer(from, value), "XCNTokenExchange: The transaction transfers XCN is reverted");
+
+        emit GMTokenReceived(operator, from, value, data);
     }
 
     function exchangeForGM(uint256 amount) external whenNotPaused nonReentrant {
