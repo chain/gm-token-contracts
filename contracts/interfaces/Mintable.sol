@@ -5,14 +5,12 @@ interface Mintable {
     /**
      * @dev Emitted when `value` tokens are minted to an account (`to`).
      *
-     * Note that `value` may be zero.
      */
     event TokenMinted(address indexed to, uint256 value);
 
     /**
      * @dev Emitted when `value` tokens are burnt from an account (`from`).
      *
-     * Note that `value` may be zero.
      */
     event TokenBurnt(address indexed from, uint256 value);
 

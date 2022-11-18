@@ -11,7 +11,7 @@ import "./token/ERC1363/ERC1363.sol";
 import "./interfaces/Mintable.sol";
 
 contract GMToken is ERC1363, Mintable, Pausable, AccessControl {
-	using SafeMath for uint256;
+    using SafeMath for uint256;
 
     string private _name = "Geometric Token";
     string private _symbol = "GM";
