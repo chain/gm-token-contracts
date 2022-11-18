@@ -8,8 +8,9 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/interfaces/IERC1363.sol";
 import "./token/ERC1363/ERC1363.sol";
+import "./interfaces/Mintable.sol";
 
-contract GMToken is ERC1363, Pausable, AccessControl {
+contract GMToken is ERC1363, Mintable, Pausable, AccessControl {
     using SafeMath for uint256;
 
     string private _name = "Geometric Token";
@@ -19,20 +20,6 @@ contract GMToken is ERC1363, Pausable, AccessControl {
     uint256 public constant MAX_SUPPLY = 68895442185 * (10**uint256(18));
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-
-    /**
-     * @dev Emitted when `value` tokens are minted to an account (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event TokenMinted(address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when `value` tokens are burnt from an account (`from`).
-     *
-     * Note that `value` may be zero.
-     */
-    event TokenBurnt(address indexed from, uint256 value);
 
     /**
      * @dev Emitted when the token name is changed to (`newName`)
@@ -52,6 +39,17 @@ contract GMToken is ERC1363, Pausable, AccessControl {
         _grantRole(MINTER_ROLE, msg.sender);
 
         _mint(msg.sender, INITIAL_SUPPLY);
+    }
+
+    /**
+     * @dev grant the MINTER_ROLE after minter contract is deployed
+     *
+     * Requirements:
+     *
+     * - the caller must have the `DEFAULT_ADMIN_ROLE`.
+     */
+    function grantMinterRole(address minter) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+        _grantRole(MINTER_ROLE, minter);
     }
 
     /**
@@ -79,25 +77,25 @@ contract GMToken is ERC1363, Pausable, AccessControl {
     }
 
     /**
-     * @dev Destroys `amount` tokens from `account`, reducing the
+     * @dev Destroys `amount` tokens from _msgSender(), reducing the
      * total supply.
      *
+     * Emits a {TokenBurnt} event with `from` set to msg.sender and `value` set to the amount to be burnt
      * Emits a {Transfer} event with `to` set to the zero address.
      *
      * Requirements:
      *
-     * - `from` cannot be the zero address.
-     * - `from` must have at least `amount` tokens.
      * - the caller must have the `MINTER_ROLE`.
      */
-    function burn(address from, uint256 amount) public onlyRole(MINTER_ROLE) {
-        _burn(from, amount);
-        emit TokenBurnt(from, amount);
+    function burn(uint256 amount) public override onlyRole(MINTER_ROLE) {
+        _burn(_msgSender(), amount);
+        emit TokenBurnt(tx.origin, amount);
     }
 
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.
      *
+     * Emits a {TokenMinted} event with `to` set to token recipient and `value` set to the amount to be minted
      * Emits a {Transfer} event with `from` set to the zero address.
      *
      * Requirements:
@@ -107,6 +105,7 @@ contract GMToken is ERC1363, Pausable, AccessControl {
      */
     function mint(address to, uint256 amount)
         public
+        override
         onlyRole(MINTER_ROLE)
         validRecipient(to)
     {
