@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./token/ERC1363/ERC1363Upgradeable.sol";
 import "./token/ERC1363/IERC1363Upgradeable.sol";
 
@@ -17,12 +18,15 @@ contract GMTokenUpgradeable is
     OwnableUpgradeable,
     AccessControlUpgradeable
 {
-    uint256 public constant INITIAL_SUPPLY = 100000000 * 10**uint256(18);
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    using SafeMathUpgradeable for uint256;
 
     string private _name = "Geometric Token";
     string private _symbol = "GM";
+
+    uint256 public constant INITIAL_SUPPLY = 1000000000 * 10**uint256(18);
+    uint256 public constant MAX_SUPPLY = 68895442185 * (10**uint256(18));
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /**
      * @dev Emitted when `value` tokens are minted to an account (`to`).
@@ -100,8 +104,8 @@ contract GMTokenUpgradeable is
      *
      * Requirements:
      *
-     * - `account` cannot be the zero address.
-     * - `account` must have at least `amount` tokens.
+     * - `from` cannot be the zero address.
+     * - `from` must have at least `amount` tokens.
      * - the caller must have the `MINTER_ROLE`.
      */
     function burn(address from, uint256 amount) public onlyRole(MINTER_ROLE) {
@@ -116,7 +120,7 @@ contract GMTokenUpgradeable is
      *
      * Requirements:
      *
-     * - `account` cannot be the zero address.
+     * - `to` cannot be the zero address.
      * - the caller must have the `MINTER_ROLE`.
      */
     function mint(address to, uint256 amount)
@@ -124,7 +128,10 @@ contract GMTokenUpgradeable is
         onlyRole(MINTER_ROLE)
         validRecipient(to)
     {
-        // check if amount + totalSupply < MAX_SUPPLY
+        require(
+            totalSupply().add(amount) <= MAX_SUPPLY,
+            "GMTokenUpgradeable: Mint amount exceeds max supply"
+        );
         _mint(to, amount);
         emit TokenMinted(to, amount);
     }

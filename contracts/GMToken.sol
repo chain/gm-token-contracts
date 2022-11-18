@@ -6,16 +6,20 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./token/ERC1363/ERC1363.sol";
 import "./token/ERC1363/IERC1363.sol";
 
 contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
-    uint256 public constant INITIAL_SUPPLY = 100000000 * 10**uint256(18);
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    using SafeMath for uint256;
 
     string private _name = "Geometric Token";
     string private _symbol = "GM";
+
+    uint256 public constant INITIAL_SUPPLY = 1000000000 * 10**uint256(18);
+    uint256 public constant MAX_SUPPLY = 68895442185 * (10**uint256(18));
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /**
      * @dev Emitted when `value` tokens are minted to an account (`to`).
@@ -83,8 +87,8 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
      *
      * Requirements:
      *
-     * - `account` cannot be the zero address.
-     * - `account` must have at least `amount` tokens.
+     * - `from` cannot be the zero address.
+     * - `from` must have at least `amount` tokens.
      * - the caller must have the `MINTER_ROLE`.
      */
     function burn(address from, uint256 amount) public onlyRole(MINTER_ROLE) {
@@ -99,7 +103,7 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
      *
      * Requirements:
      *
-     * - `account` cannot be the zero address.
+     * - `to` cannot be the zero address.
      * - the caller must have the `MINTER_ROLE`.
      */
     function mint(address to, uint256 amount)
@@ -107,7 +111,10 @@ contract GMToken is ERC1363, Pausable, Ownable, AccessControl {
         onlyRole(MINTER_ROLE)
         validRecipient(to)
     {
-        // check if amount + totalSupply < MAX_SUPPLY
+        require(
+            totalSupply().add(amount) <= MAX_SUPPLY,
+            "GMToken: Mint amount exceeds max supply"
+        );
         _mint(to, amount);
         emit TokenMinted(to, amount);
     }
