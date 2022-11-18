@@ -48,17 +48,24 @@ contract('Exchange', (accounts) => {
     const checkBalance = async (address) => {
         let ethBalance = await eth.getBalance(address);
         let gmBalance = await gmToken.balanceOf(address);
+        let mdtBalance = await mdtToken.balanceOf(address);
         let xcnBalance = await xcnToken.balanceOf(address);
         console.log(address, 'has',
             ethBalance.toString() != '0' ? ethBalance.toString().slice(0, -18) : '0', 'ETH',
             gmBalance.toString() != '0' ? gmBalance.toString().slice(0, -18) : '0', 'GM',
+            mdtBalance.toString() != '0' ? mdtBalance.toString().slice(0, -18) : '0', 'MDT',
             xcnBalance.toString() != '0' ? xcnBalance.toString().slice(0, -18) : '0', 'XCN'
         );
-        return [ethBalance, gmBalance, xcnBalance];
+        return {
+            ETH: ethBalance,
+            GM: gmBalance,
+            MDT: mdtBalance,
+            XCN: xcnBalance
+        };
     }
 
     beforeEach('Basic setup', async () => {
-        // mdtToken = await MDT.deployed();
+        mdtToken = await MDT.deployed();
         gmToken = await GM.deployed();
         xcnToken = await XCN.deployed();
         exchangeContract = await Exchange.deployed();
@@ -88,13 +95,13 @@ contract('Exchange', (accounts) => {
         let userBalancesAfter = await checkBalance(user);
         let contractBalancesAfter = await checkBalance(exchangeContract.address);
 
-        assert.equal(Number(userBalancesBefore[1]) - Number(userBalancesAfter[1]), Math.pow(10, 18) * amount, 'User should loss ' + amount + 'GM');
+        assert.equal(Number(userBalancesBefore.GM) - Number(userBalancesAfter.GM), Math.pow(10, 18) * amount, 'User should loss ' + amount + 'GM');
 
-        assert.equal(Number(userBalancesAfter[2]) - Number(userBalancesBefore[2]), Math.pow(10, 18) * amount, 'User should earn ' + amount + 'XCN');
+        assert.equal(Number(userBalancesAfter.XCN) - Number(userBalancesBefore.XCN), Math.pow(10, 18) * amount, 'User should earn ' + amount + 'XCN');
 
-        assert.equal(Number(contractBalancesAfter[1]) - Number(contractBalancesBefore[1]), 0, 'Contract should not have any changes on GM balance');
+        assert.equal(Number(contractBalancesAfter.GM) - Number(contractBalancesBefore.GM), 0, 'Contract should not have any changes on GM balance');
 
-        assert.equal(Number(contractBalancesBefore[2]) - Number(contractBalancesAfter[2]), Math.pow(10, 18) * amount, 'Contract should decrease ' + amount + 'XCN');
+        assert.equal(Number(contractBalancesBefore.XCN) - Number(contractBalancesAfter.XCN), Math.pow(10, 18) * amount, 'Contract should decrease ' + amount + 'XCN');
     });
 
     it('Sending GM to Exchange contract should be rewarded with equivalent newly-minted GM', async () => {
@@ -107,13 +114,13 @@ contract('Exchange', (accounts) => {
         let userBalancesAfter = await checkBalance(user);
         let contractBalancesAfter = await checkBalance(exchangeContract.address);
 
-        assert.equal(Number(userBalancesBefore[2]) - Number(userBalancesAfter[2]), Math.pow(10, 18) * amount, 'User should loss ' + amount + 'XCN');
+        assert.equal(Number(userBalancesBefore.XCN) - Number(userBalancesAfter.XCN), Math.pow(10, 18) * amount, 'User should loss ' + amount + 'XCN');
 
-        assert.equal(Number(userBalancesAfter[1]) - Number(userBalancesBefore[1]), Math.pow(10, 18) * amount, 'User should earn ' + amount + 'GM');
+        assert.equal(Number(userBalancesAfter.GM) - Number(userBalancesBefore.GM), Math.pow(10, 18) * amount, 'User should earn ' + amount + 'GM');
 
-        assert.equal(Number(contractBalancesAfter[1]) - Number(contractBalancesBefore[1]), 0, 'Contract should not have any changes on GM balance');
+        assert.equal(Number(contractBalancesAfter.GM) - Number(contractBalancesBefore.GM), 0, 'Contract should not have any changes on GM balance');
 
-        assert.equal(Number(contractBalancesAfter[2]) - Number(contractBalancesBefore[2]), Math.pow(10, 18) * amount, 'Contract should increase ' + amount + 'XCN');
+        assert.equal(Number(contractBalancesAfter.XCN) - Number(contractBalancesBefore.XCN), Math.pow(10, 18) * amount, 'Contract should increase ' + amount + 'XCN');
     });
 
     it('Should not be able to burn GM if pre-deposited XCN is out of balance', async () => {
