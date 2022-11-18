@@ -3,7 +3,8 @@ const MDT = artifacts.require('MDTToken');
 const GM = artifacts.require('GMToken');
 const GMUpgradeable = artifacts.require('GMTokenUpgradeable');
 const XCN = artifacts.require('XCNToken');
-const Exchange = artifacts.require('XCNTokenExchange');
+const MDTExchange = artifacts.require('MDTTokenExchange');
+const XCNExchange = artifacts.require('XCNTokenExchange');
 
 module.exports = (deployer, network, accounts) => {
     let admin = accounts[0]; // default admin of all upgradeable contracts
@@ -44,19 +45,29 @@ module.exports = (deployer, network, accounts) => {
             });
     };
 
-    let deployExchangeContract = (gmInstance, xcnInstance) => {
-        return deployProxy(Exchange, [ gmInstance.address, xcnInstance.address, true ], { deployer })
+    let deployMDTExchangeContract = (gmInstance, mdtInstance) => {
+        return deployer.deploy(MDTExchange, gmInstance.address, mdtInstance.address, { from: mdtExchangeAdmin })
             .then(exchangeInstance => {
-                console.log('Exchange contract deployed: ', exchangeInstance.address);
+                console.log('MDT Exchange contract deployed: ', exchangeInstance.address);
+                return Promise.resolve(exchangeInstance);
+            });
+    };
+
+    let deployXCNExchangeContract = (gmInstance, xcnInstance) => {
+        return deployProxy(XCNExchange, [ gmInstance.address, xcnInstance.address, true ], { deployer })
+            .then(exchangeInstance => {
+                console.log('XCN Exchange contract deployed: ', exchangeInstance.address);
                 return gmInstance.grantMinterRole(exchangeInstance.address, { from: gmAdmin })
                     .then(authorizeTx => authorizeTx.tx)
-                    .then(console.log) // authorizeTx
+                    // .then(console.log) // authorizeTx
                     .then(() => Promise.resolve(exchangeInstance));
             });
-    }
+    };
 
     deployGmContract()
         .then(gmInstance => deployXcnContract()
-            .then(xcnInstance => deployExchangeContract(gmInstance, xcnInstance)))
-        .then(() => deployMdtContract());
+            .then(xcnInstance => deployXCNExchangeContract(gmInstance, xcnInstance))
+            .then(() => deployMdtContract())
+            .then(mdtInstance => deployMDTExchangeContract(gmInstance, mdtInstance))
+        );
 }
