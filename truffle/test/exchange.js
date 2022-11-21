@@ -26,11 +26,11 @@ contract('Exchange', (accounts) => {
     let xcnExchangeContract;
 
     const tokenTransfer = async (token, from, to, amount) => {
-        let senderBalanceBefore = await token.balanceOf(from);
+        await token.balanceOf(from);
         let recipientBalanceBefore = await token.balanceOf(to);
         let exchangeTx = await token.transfer(to, (Math.pow(10, 18) * amount).toString(), {from: from});
         // console.log(exchangeTx);
-        let senderBalanceAfter = await token.balanceOf(from);
+        await token.balanceOf(from);
         let recipientBalanceAfter = await token.balanceOf(to);
         // console.log(Number(senderBalanceBefore) - Number(senderBalanceAfter), amount, Number(recipientBalanceAfter) - Number(recipientBalanceBefore));
         // assert.equal(Number(senderBalanceBefore) - Number(senderBalanceAfter), Math.pow(10, 18) * amount, 'Sender should loss ' + amount); // gas fee consumed
@@ -77,10 +77,10 @@ contract('Exchange', (accounts) => {
         let mdtBalance = await mdtToken.balanceOf(address);
         let xcnBalance = await xcnToken.balanceOf(address);
         console.log(address, 'has',
-            ethBalance.toString() != '0' ? ethBalance.toString().slice(0, -18) : '0', 'ETH',
-            gmBalance.toString() != '0' ? gmBalance.toString().slice(0, -18) : '0', 'GM',
-            mdtBalance.toString() != '0' ? mdtBalance.toString().slice(0, -18) : '0', 'MDT',
-            xcnBalance.toString() != '0' ? xcnBalance.toString().slice(0, -18) : '0', 'XCN'
+            ethBalance.toString() !== '0' ? ethBalance.toString().slice(0, -18) : '0', 'ETH',
+            gmBalance.toString() !== '0' ? gmBalance.toString().slice(0, -18) : '0', 'GM',
+            mdtBalance.toString() !== '0' ? mdtBalance.toString().slice(0, -18) : '0', 'MDT',
+            xcnBalance.toString() !== '0' ? xcnBalance.toString().slice(0, -18) : '0', 'XCN'
         );
         return {
             ETH: ethBalance,
@@ -115,8 +115,7 @@ contract('Exchange', (accounts) => {
         let contractBalancesBefore = await checkBalance(xcnExchangeContract.address);
 
         let amount = 10;
-        let exchangeTx = await exchangeGmForXcn(user, amount);
-        // console.log(exchangeTx);
+        await exchangeGmForXcn(user, amount);
         console.log(user, 'send', amount, 'GM to', xcnExchangeContract.address, 'to exchange XCN');
         let userBalancesAfter = await checkBalance(user);
         let contractBalancesAfter = await checkBalance(xcnExchangeContract.address);
@@ -135,7 +134,7 @@ contract('Exchange', (accounts) => {
         let contractBalancesBefore = await checkBalance(xcnExchangeContract.address);
 
         let amount = 5;
-        let exchangeTx = await exchangeXcnForGm(user, amount);
+        await exchangeXcnForGm(user, amount);
         console.log(user, 'send', amount, 'XCN to', xcnExchangeContract.address, 'to exchange GM');
         let userBalancesAfter = await checkBalance(user);
         let contractBalancesAfter = await checkBalance(xcnExchangeContract.address);
@@ -150,7 +149,7 @@ contract('Exchange', (accounts) => {
     });
 
     it('Should not be able to burn GM if pre-deposited XCN is out of balance', async () => {
-        let contractBalancesBefore = await checkBalance(xcnExchangeContract.address);
+        await checkBalance(xcnExchangeContract.address);
 
         let amount = 100;
         await truffleAssert.reverts(exchangeGmForXcn(user, amount),
@@ -158,7 +157,7 @@ contract('Exchange', (accounts) => {
     });
 
     it('Should not be able to mint GM if user doesn\'t have sufficient XCN', async () => {
-        let userBalancesBefore = await checkBalance(user);
+        await checkBalance(user);
 
         let amount = 10;
         await truffleAssert.reverts(exchangeXcnForGm(user, amount),
@@ -166,8 +165,8 @@ contract('Exchange', (accounts) => {
     });
 
     it('Should be able to subscribe event emission when exchanging XCN for GM', async () => {
-        let userBalancesBefore = await checkBalance(user);
-        let contractBalancesBefore = await checkBalance(xcnExchangeContract.address);
+        await checkBalance(user);
+        await checkBalance(xcnExchangeContract.address);
 
         let amount = 5;
         let exchangeTx = await exchangeXcnForGm(user, amount);
@@ -177,13 +176,13 @@ contract('Exchange', (accounts) => {
         truffleAssert.eventEmitted(nestedTx, 'TokenMinted');
         console.log(user, 'send', amount, 'XCN to', xcnExchangeContract.address, 'to exchange GM');
 
-        let userBalancesAfter = await checkBalance(user);
-        let contractBalancesAfter = await checkBalance(xcnExchangeContract.address);
+        await checkBalance(user);
+        await checkBalance(xcnExchangeContract.address);
     });
 
     it('Should be able to subscribe nested event emission when exchanging GM for XCN', async () => {
-        let userBalancesBefore = await checkBalance(user);
-        let contractBalancesBefore = await checkBalance(xcnExchangeContract.address);
+        await checkBalance(user);
+        await checkBalance(xcnExchangeContract.address);
 
         let amount = 10;
         let exchangeTx = await exchangeGmForXcn(user, amount);
@@ -200,8 +199,8 @@ contract('Exchange', (accounts) => {
         });
         console.log(user, 'send', amount, 'GM to', xcnExchangeContract.address, 'to exchange XCN');
 
-        let userBalancesAfter = await checkBalance(user);
-        let contractBalancesAfter = await checkBalance(xcnExchangeContract.address);
+        await checkBalance(user);
+        await checkBalance(xcnExchangeContract.address);
     });
 
     it('Should be able to swapping MDT for equivalent pre-deposited GM', async () => {
@@ -209,7 +208,7 @@ contract('Exchange', (accounts) => {
         let contractBalancesBefore = await checkBalance(mdtExchangeContract.address);
 
         let amount = 10;
-        let exchangeTx = await exchangeMdtForGm(user, amount);
+        await exchangeMdtForGm(user, amount);
         console.log(user, 'send', amount, 'MDT to', mdtExchangeContract.address, 'to exchange GM');
         let userBalancesAfter = await checkBalance(user);
         let contractBalancesAfter = await checkBalance(mdtExchangeContract.address);
@@ -224,7 +223,7 @@ contract('Exchange', (accounts) => {
     });
 
     it('Should not be able to exchange for GM if the contract is out of balance', async () => {
-        let contractBalances = await checkBalance(mdtExchangeContract.address);
+        await checkBalance(mdtExchangeContract.address);
 
         let amount = 100;
         await truffleAssert.reverts(exchangeMdtForGm(user, amount),
@@ -232,8 +231,8 @@ contract('Exchange', (accounts) => {
     });
 
     it('Should be able to subscribe nested event emission when exchanging MDT for GM', async () => {
-        let userBalancesBefore = await checkBalance(user);
-        let contractBalancesBefore = await checkBalance(mdtExchangeContract.address);
+        await checkBalance(user);
+        await checkBalance(mdtExchangeContract.address);
 
         let amount = 10;
         let exchangeTx = await exchangeMdtForGm(user, amount);
@@ -246,8 +245,8 @@ contract('Exchange', (accounts) => {
         });
         console.log(user, 'send', amount, 'MDT to', mdtExchangeContract.address, 'to exchange GM');
 
-        let userBalancesAfter = await checkBalance(user);
-        let contractBalancesAfter = await checkBalance(mdtExchangeContract.address);
+        await checkBalance(user);
+        await checkBalance(mdtExchangeContract.address);
     });
 
 });
