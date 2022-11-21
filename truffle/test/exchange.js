@@ -1,4 +1,5 @@
 const truffleAssert = require("truffle-assertions");
+const dotenv = require('dotenv');
 const MDT = artifacts.require('MDTToken');
 const GMUpgradeable = artifacts.require('GMTokenUpgradeable');
 const GM = artifacts.require('GMToken');
@@ -9,8 +10,11 @@ const XCNExchange = artifacts.require('XCNTokenExchange');
 contract('Exchange', (accounts) => {
     const eth = web3.eth;
 
+    dotenv.config('.env');
+    const deployGMWithProxy = process.env.DEPLOY_GM_WITH_PROXY ? process.env.DEPLOY_GM_WITH_PROXY : false;
+
     let mdtAdmin = accounts[1];
-    let gmAdmin = accounts[2];
+    let gmAdmin = deployGMWithProxy ? accounts[0] : accounts[2];
     let xcnAdmin = accounts[3];
 
     let user = accounts[6];
@@ -88,7 +92,7 @@ contract('Exchange', (accounts) => {
 
     beforeEach('Basic setup', async () => {
         mdtToken = await MDT.deployed();
-        gmToken = await GM.deployed();
+        gmToken = deployGMWithProxy ? await GMUpgradeable.deployed() : await GM.deployed();
         xcnToken = await XCN.deployed();
         mdtExchangeContract = await MDTExchange.deployed();
         xcnExchangeContract = await XCNExchange.deployed();
