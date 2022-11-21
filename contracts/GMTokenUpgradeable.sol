@@ -21,8 +21,8 @@ contract GMTokenUpgradeable is
 {
     using SafeMathUpgradeable for uint256;
 
-    string private _name = "Geometric Token";
-    string private _symbol = "GM";
+    string private _name;
+    string private _symbol;
 
     uint256 public constant INITIAL_SUPPLY = 1000000000 * 10**uint256(18);
     uint256 public constant MAX_SUPPLY = 68895442185 * (10**uint256(18));
@@ -47,7 +47,11 @@ contract GMTokenUpgradeable is
      * PAUSER_ROLE and MINTER_ROLE to the caller.
      */
     function initialize() public initializer {
+        _name = "Geometric Token";
+        _symbol = "GM";
+
         __ERC20_init("", "");
+
         __Pausable_init();
         __AccessControl_init();
 
