@@ -103,7 +103,7 @@ contract('Exchange', (accounts) => {
             await gmTransfer(gmAdmin, user, 100);
             await gmTransfer(gmAdmin, mdtExchangeContract.address, 100);
             // await eth.sendTransaction({ from: exchangeAdmin, to: exchangeContract.address, value: toWei('1', 'ether')});
-            await mdtTransfer(mdtAdmin, user, 100);
+            await mdtTransfer(mdtAdmin, user, 200);
             await xcnTransfer(xcnAdmin, xcnExchangeContract.address, 100);
         } catch (ex) {
             assert.ok(false, "Token transfer transaction is reverted");
@@ -130,7 +130,7 @@ contract('Exchange', (accounts) => {
         assert.equal(Number(contractBalancesBefore.XCN) - Number(contractBalancesAfter.XCN), Math.pow(10, 18) * amount, 'Contract should decrease ' + amount + 'XCN');
     });
 
-    it('Sending GM to Exchange contract should be rewarded with equivalent newly-minted GM', async () => {
+    it('Depositing XCN to Exchange contract should be rewarded with equivalent newly-minted GM', async () => {
         let userBalancesBefore = await checkBalance(user);
         let contractBalancesBefore = await checkBalance(xcnExchangeContract.address);
 
@@ -188,8 +188,13 @@ contract('Exchange', (accounts) => {
         let amount = 10;
         let exchangeTx = await exchangeGmForXcn(user, amount);
         // console.log(exchangeTx);
-        let nestedTx = await truffleAssert.createTransactionResult(gmToken, exchangeTx.tx);
-        truffleAssert.eventEmitted(nestedTx, 'TokenBurnt', ev => {
+        let nestedTokenTx = await truffleAssert.createTransactionResult(gmToken, exchangeTx.tx);
+        truffleAssert.eventEmitted(nestedTokenTx, 'TokenBurnt', ev => {
+            // console.log(ev);
+            return ev.from === user;
+        });
+        let nestedExchangeTx = await truffleAssert.createTransactionResult(xcnExchangeContract, exchangeTx.tx);
+        truffleAssert.eventEmitted(nestedExchangeTx, 'GMTokenReceived', ev => {
             // console.log(ev);
             return ev.from === user;
         });
@@ -216,6 +221,33 @@ contract('Exchange', (accounts) => {
         assert.equal(Number(contractBalancesBefore.GM) - Number(contractBalancesAfter.GM), Math.pow(10, 18) * amount, 'Contract should not have any changes on GM balance');
 
         assert.equal(Number(contractBalancesAfter.MDT) - Number(contractBalancesBefore.MDT), Math.pow(10, 18) * amount, 'Contract should increase ' + amount + 'XCN');
+    });
+
+    it('Should not be able to exchange for GM if the contract is out of balance', async () => {
+        let contractBalances = await checkBalance(mdtExchangeContract.address);
+
+        let amount = 100;
+        await truffleAssert.reverts(exchangeMdtForGm(user, amount),
+            'ERC20: transfer amount exceeds balance');
+    });
+
+    it('Should be able to subscribe nested event emission when exchanging MDT for GM', async () => {
+        let userBalancesBefore = await checkBalance(user);
+        let contractBalancesBefore = await checkBalance(mdtExchangeContract.address);
+
+        let amount = 10;
+        let exchangeTx = await exchangeMdtForGm(user, amount);
+        // console.log(exchangeTx);
+        let nestedTx = await truffleAssert.createTransactionResult(mdtExchangeContract, exchangeTx.tx);
+        // console.log(nestedTx);
+        truffleAssert.eventEmitted(nestedTx, 'MDTTokenReceived', ev => {
+            // console.log(ev);
+            return ev.from === user;
+        });
+        console.log(user, 'send', amount, 'MDT to', mdtExchangeContract.address, 'to exchange GM');
+
+        let userBalancesAfter = await checkBalance(user);
+        let contractBalancesAfter = await checkBalance(mdtExchangeContract.address);
     });
 
 });
