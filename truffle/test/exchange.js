@@ -129,7 +129,7 @@ contract('Exchange', (accounts) => {
         assert.equal(Number(contractBalancesBefore.XCN) - Number(contractBalancesAfter.XCN), Math.pow(10, 18) * amount, 'Contract should decrease ' + amount + 'XCN');
     });
 
-    it('Depositing XCN to Exchange contract should be rewarded with equivalent newly-minted GM', async () => {
+    it('Depositing XCN to Exchange contract should mint equivalent amount of GM', async () => {
         let userBalancesBefore = await checkBalance(user);
         let contractBalancesBefore = await checkBalance(xcnExchangeContract.address);
 
