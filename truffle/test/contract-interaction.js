@@ -109,6 +109,14 @@ const exchangeXcnForGm = async (sender, amount) => {
     return exchangeTx;
 };
 
+const disableGmExchangeForXcn = async (operator) => {
+    return await xcnExchangeContract.toggleXcnOutflow(false, { from: operator });
+}
+
+const enableGmExchangeForXcn = async (operator) => {
+    return await xcnExchangeContract.toggleXcnOutflow(true, { from: operator });
+}
+
 const checkBalance = async (address) => {
     let ethBalance = await eth.getBalance(address);
     let gmBalance = await gmToken.balanceOf(address);
@@ -147,6 +155,8 @@ const transactions = {
     exchangeMdtForGm: exchangeMdtForGm,
     exchangeXcnForGm: exchangeXcnForGm,
     exchangeGmForXcn: exchangeGmForXcn,
+    disableGmExchangeForXcn: disableGmExchangeForXcn,
+    enableGmExchangeForXcn: enableGmExchangeForXcn,
     tokenRecover: tokenRecover,
     pause: pause,
     unpause: unpause,

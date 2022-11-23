@@ -19,6 +19,8 @@ contract('Test cases to see whether permission checking works during token excha
     const exchangeMdtForGm = environment.transactions.exchangeMdtForGm;
     const exchangeGmForXcn = environment.transactions.exchangeGmForXcn;
     const exchangeXcnForGm = environment.transactions.exchangeXcnForGm;
+    const disableGmExchangeForXcn = environment.transactions.disableGmExchangeForXcn;
+    const enableGmExchangeForXcn = environment.transactions.enableGmExchangeForXcn;
     const pause = environment.transactions.pause;
     const unpause = environment.transactions.unpause;
     const recoverToken = environment.transactions.tokenRecover;
@@ -197,5 +199,56 @@ contract('Test cases to see whether permission checking works during token excha
 
         userBalancesAfter = await checkBalance(user);
         assert.equal(Number(userBalancesAfter.XCN) - Number(userBalancesBefore.XCN), Math.pow(10, 18) * amount, 'User should earn ' + amount + ' XCN');
+    });
+
+    it('Other account cannot disable to exchange GM for XCN', async () => {
+        await truffleAssert.reverts(disableGmExchangeForXcn(user),
+            'Ownable: caller is not the owner');
+    });
+
+    it('The owner should be able to disable to exchange GM for XCN', async () => {
+        try {
+            await disableGmExchangeForXcn(xcnExchangeAdmin);
+        } catch (ex) {
+            console.error(ex);
+            assert.ok(false, 'Pause transaction is reverted');
+        }
+    });
+
+    it('Only exchange GM for XCN should not work any more after being disabled by owner', async () => {
+        let amount = 10;
+        try {
+            await exchangeXcnForGm(user, amount);
+        } catch (ex) {
+            console.error(ex);
+            assert.ok(false, 'Pause transaction is reverted');
+        }
+
+        await truffleAssert.reverts(exchangeGmForXcn(user, amount),
+            'XCNTokenExchange: It\'s disabled to exchange GM for XCN');
+    });
+
+    it('Other account cannot enable to exchange GM for XCN', async () => {
+        await truffleAssert.reverts(enableGmExchangeForXcn(user),
+            'Ownable: caller is not the owner');
+    });
+
+    it('The owner should be able to enable to exchange GM for XCN', async () => {
+        try {
+            await enableGmExchangeForXcn(xcnExchangeAdmin);
+        } catch (ex) {
+            console.error(ex);
+            assert.ok(false, 'Pause transaction is reverted');
+        }
+    });
+
+    it('Exchange GM for XCN should work as usual after being re-enabled by owner', async () => {
+        let amount = 10;
+        try {
+            await exchangeGmForXcn(user, amount);
+        } catch (ex) {
+            console.error(ex);
+            assert.ok(false, 'Pause transaction is reverted');
+        }
     });
 });
