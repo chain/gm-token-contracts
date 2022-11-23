@@ -1,3 +1,4 @@
+const dotenv = require('dotenv');
 const { deployProxy } = require("@openzeppelin/truffle-upgrades");
 const MDT = artifacts.require('MDTToken');
 const GM = artifacts.require('GMToken');
@@ -7,22 +8,40 @@ const MDTExchange = artifacts.require('MDTTokenExchange');
 const XCNExchange = artifacts.require('XCNTokenExchange');
 
 module.exports = (deployer, network, accounts) => {
+    dotenv.config('.env');
+    const deployGMWithProxy = process.env.DEPLOY_GM_WITH_PROXY ? process.env.DEPLOY_GM_WITH_PROXY : false;
+
     let admin = accounts[0]; // default admin of all upgradeable contracts
     let mdtAdmin = accounts[1];
-    let gmAdmin = accounts[2];
+    let gmAdmin = deployGMWithProxy ? admin : accounts[2];
     let xcnAdmin = accounts[3];
     let mdtExchangeAdmin = accounts[4];
     let xcnExchangeAdmin = accounts[5];
 
     let deployGmContract = () => {
-        return deployer.deploy(GM, { from: gmAdmin })
-            // deployProxy(GMUpgradeable, [], { deployer })
+        let contractOwner = accounts[2];
+        return deployer.deploy(GM, {from: contractOwner})
             .then(gmInstance => {
                 console.log('GM token deployed: ', gmInstance.address);
-                return gmInstance.balanceOf(gmAdmin)
-                    .then(gmBalance => console.log('GM Owner', gmAdmin, 'has', gmBalance.toString().slice(0, -18), 'GM'))
+                return gmInstance.balanceOf(contractOwner)
+                    .then(gmBalance => console.log('GM Owner', contractOwner, 'has', gmBalance.toString().slice(0, -18), 'GM'))
                     .then(() => Promise.resolve(gmInstance));
             });
+    };
+
+    let deployUpgradeableGmContract = () => {
+        let contractOwner = accounts[0];
+        return deployProxy(GMUpgradeable, [], { deployer })
+            .then(gmInstance => {
+                console.log('Upgradeable GM token deployed: ', gmInstance.address);
+                return gmInstance.balanceOf(contractOwner)
+                    .then(gmBalance => console.log('GM Owner', contractOwner, 'has', gmBalance.toString().slice(0, -18), 'GM'))
+                    .then(() => Promise.resolve(gmInstance));
+            });
+    };
+
+    let chooseGmInstance = (gmInstance, upgradeableGmInstance) => {
+        return deployGMWithProxy ? upgradeableGmInstance : gmInstance;
     };
 
     let deployMdtContract = () => {
@@ -65,9 +84,12 @@ module.exports = (deployer, network, accounts) => {
     };
 
     deployGmContract()
-        .then(gmInstance => deployXcnContract()
-            .then(xcnInstance => deployXCNExchangeContract(gmInstance, xcnInstance))
-            .then(() => deployMdtContract())
-            .then(mdtInstance => deployMDTExchangeContract(gmInstance, mdtInstance))
+        .then(gmInstance => deployUpgradeableGmContract()
+            .then(upgradeableGmInstance => chooseGmInstance(gmInstance, upgradeableGmInstance))
+            .then(gmInstance => deployXcnContract()
+                .then(xcnInstance => deployXCNExchangeContract(gmInstance, xcnInstance))
+                .then(() => deployMdtContract())
+                .then(mdtInstance => deployMDTExchangeContract(gmInstance, mdtInstance))
+            )
         );
 }
