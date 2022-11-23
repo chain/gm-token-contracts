@@ -128,9 +128,16 @@ const checkBalance = async (address) => {
     };
 };
 
+const pause = async (exchangeContract, operator) => {
+    return await exchangeContract.pause({ from: operator });
+}
+
+const unpause = async (exchangeContract, operator) => {
+    return await exchangeContract.unpause({ from: operator });
+}
+
 const tokenRecover = async (exchangeContract, token, amount, operator) => {
-    let tx = await exchangeContract.recoverToken(token, (Math.pow(10, 18) * amount).toString(), { from: operator });
-    return tx;
+    return await exchangeContract.recoverToken(token, (Math.pow(10, 18) * amount).toString(), { from: operator });
 };
 
 const transactions = {
@@ -141,6 +148,8 @@ const transactions = {
     exchangeXcnForGm: exchangeXcnForGm,
     exchangeGmForXcn: exchangeGmForXcn,
     tokenRecover: tokenRecover,
+    pause: pause,
+    unpause: unpause,
     checkBalance: checkBalance
 }
 

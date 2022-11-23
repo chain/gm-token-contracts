@@ -19,6 +19,8 @@ contract('Test cases to see whether permission checking works during token excha
     const exchangeMdtForGm = environment.transactions.exchangeMdtForGm;
     const exchangeGmForXcn = environment.transactions.exchangeGmForXcn;
     const exchangeXcnForGm = environment.transactions.exchangeXcnForGm;
+    const pause = environment.transactions.pause;
+    const unpause = environment.transactions.unpause;
     const recoverToken = environment.transactions.tokenRecover;
     const checkBalance = environment.transactions.checkBalance;
 
@@ -36,7 +38,7 @@ contract('Test cases to see whether permission checking works during token excha
             await mdtTransfer(mdtAdmin, user, 100);
             await xcnTransfer(xcnAdmin, user, 100);
         } catch (ex) {
-            assert.ok(false, "Token transfer transaction is reverted");
+            assert.ok(false, 'Token transfer transaction is reverted');
         }
     });
 
@@ -64,7 +66,7 @@ contract('Test cases to see whether permission checking works during token excha
             await recoverToken(contractInstances.mdtExchangeContract, contractInstances.xcnToken.address, amount, mdtExchangeAdmin);
         } catch (ex) {
             console.error(ex);
-            assert.ok(false, "Token recover transaction is reverted");
+            assert.ok(false, 'Token recover transaction is reverted');
         }
 
         let ownerBalancesAfter = await checkBalance(mdtExchangeAdmin);
@@ -96,11 +98,104 @@ contract('Test cases to see whether permission checking works during token excha
             await recoverToken(contractInstances.xcnExchangeContract, contractInstances.mdtToken.address, amount, xcnExchangeAdmin);
         } catch (ex) {
             console.error(ex);
-            assert.ok(false, "Token recover transaction is reverted");
+            assert.ok(false, 'Token recover transaction is reverted');
         }
 
         let ownerBalancesAfter = await checkBalance(xcnExchangeAdmin);
 
         assert.equal(Number(ownerBalancesAfter.MDT) - Number(ownerBalancesBefore.MDT), Math.pow(10, 18) * amount, 'Owner should recover ' + amount + ' MDT');
+    });
+
+    it('Other account cannot pause the MDT exchange contract', async () => {
+        await truffleAssert.reverts(pause(contractInstances.mdtExchangeContract, user),
+            'Ownable: caller is not the owner');
+    });
+
+    it('The owner should be able to pause the MDT exchange contract', async () => {
+        try {
+            await pause(contractInstances.mdtExchangeContract, mdtExchangeAdmin);
+        } catch (ex) {
+            console.error(ex);
+            assert.ok(false, 'Pause transaction is reverted');
+        }
+    });
+
+    it('MDT exchange should not work any more during the paused state', async () => {
+        let amount = 10;
+        await truffleAssert.reverts(exchangeMdtForGm(user, amount),
+            'Pausable: paused');
+    });
+
+    it('MDT exchange should work as usual after recover from paused state by unpause() called', async () => {
+        await unpause(contractInstances.mdtExchangeContract, mdtExchangeAdmin);
+
+        let userBalancesBefore = await checkBalance(user);
+
+        let amount = 10;
+        try {
+            await exchangeMdtForGm(user, amount);
+            console.log(user, 'send', amount, 'MDT to', contractInstances.mdtExchangeContract.address, 'to exchange GM');
+        } catch (ex) {
+            console.error(ex);
+            assert.ok(false, 'Token recover transaction is reverted');
+        }
+
+        let userBalancesAfter = await checkBalance(user);
+        assert.equal(Number(userBalancesAfter.GM) - Number(userBalancesBefore.GM), Math.pow(10, 18) * amount, 'User should earn ' + amount + ' GM');
+    });
+
+    it('Other account cannot pause the XCN exchange contract', async () => {
+        await truffleAssert.reverts(pause(contractInstances.xcnExchangeContract, user),
+            'Ownable: caller is not the owner');
+    });
+
+    it('The owner should be able to pause the XCN exchange contract', async () => {
+        try {
+            await pause(contractInstances.xcnExchangeContract, xcnExchangeAdmin);
+        } catch (ex) {
+            console.error(ex);
+            assert.ok(false, 'Pause transaction is reverted');
+        }
+    });
+
+    it('XCN exchange should not work any more during the paused state', async () => {
+        let amount = 10;
+        await truffleAssert.reverts(exchangeXcnForGm(user, amount),
+            'Pausable: paused');
+
+        await truffleAssert.reverts(exchangeGmForXcn(user, amount),
+            'Pausable: paused');
+    });
+
+    it('XCN exchange should work as usual after recover from paused state by unpause() called', async () => {
+        await unpause(contractInstances.xcnExchangeContract, xcnExchangeAdmin);
+
+        // XCN exchange for GM
+        let userBalancesBefore = await checkBalance(user);
+
+        let amount = 10;
+        try {
+            await exchangeXcnForGm(user, amount);
+            console.log(user, 'send', amount, 'XCN to', contractInstances.xcnExchangeContract.address, 'to exchange GM');
+        } catch (ex) {
+            console.error(ex);
+            assert.ok(false, 'Token recover transaction is reverted');
+        }
+
+        let userBalancesAfter = await checkBalance(user);
+        assert.equal(Number(userBalancesAfter.GM) - Number(userBalancesBefore.GM), Math.pow(10, 18) * amount, 'User should earn ' + amount + ' GM');
+
+        // GM exchange for XCN
+        userBalancesBefore = userBalancesAfter;
+        try {
+            await exchangeGmForXcn(user, amount);
+            console.log(user, 'send', amount, 'GM to', contractInstances.xcnExchangeContract.address, 'to exchange XCN');
+        } catch (ex) {
+            console.error(ex);
+            assert.ok(false, 'Token recover transaction is reverted');
+        }
+
+        userBalancesAfter = await checkBalance(user);
+        assert.equal(Number(userBalancesAfter.XCN) - Number(userBalancesBefore.XCN), Math.pow(10, 18) * amount, 'User should earn ' + amount + ' XCN');
     });
 });
