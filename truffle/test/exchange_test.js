@@ -33,6 +33,7 @@ contract('Test cases for token & token exchange contract interactions', (account
             await mdtTransfer(mdtAdmin, user, 200);
             await xcnTransfer(xcnAdmin, contractInstances.xcnExchangeContract.address, 100);
         } catch (ex) {
+            console.error(ex);
             assert.ok(false, "Token transfer transaction is reverted");
         }
     });

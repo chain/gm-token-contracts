@@ -30,7 +30,7 @@ const setup = (_env, accounts) => {
         },
         transactions: transactions
     }
-}
+};
 
 const getRolesFromAccounts = (env, accounts) => {
     const deployGMWithProxy = env.DEPLOY_GM_WITH_PROXY ? env.DEPLOY_GM_WITH_PROXY : false;
@@ -38,7 +38,10 @@ const getRolesFromAccounts = (env, accounts) => {
         mdtAdmin: accounts[1],
         gmAdmin: deployGMWithProxy ? accounts[0] : accounts[2],
         xcnAdmin: accounts[3],
-        user: accounts[6]
+        mdtExchangeAdmin: accounts[0],
+        xcnExchangeAdmin: accounts[0],
+        user: accounts[6],
+        attacker: accounts[7]
     }
 };
 
@@ -58,7 +61,7 @@ const loadAllContractInstances = async () => {
         mdtExchangeContract: mdtExchangeContract,
         xcnExchangeContract: xcnExchangeContract
     }
-}
+};
 
 const tokenTransfer = async (token, from, to, amount) => {
     await token.balanceOf(from);
@@ -71,31 +74,31 @@ const tokenTransfer = async (token, from, to, amount) => {
     // assert.equal(Number(senderBalanceBefore) - Number(senderBalanceAfter), Math.pow(10, 18) * amount, 'Sender should loss ' + amount); // gas fee consumed
     assert.equal(Number(recipientBalanceAfter) - Number(recipientBalanceBefore), Math.pow(10, 18) * amount, 'Recipient should gain ' + amount);
     return exchangeTx;
-}
+};
 
 const gmTransfer = async (from, to, amount) => {
     return tokenTransfer(gmToken, from, to, amount);
-}
+};
 
 const mdtTransfer = async (from, to, amount) => {
     return tokenTransfer(mdtToken, from, to, amount);
-}
+};
 
 const xcnTransfer = async (from, to, amount) => {
     return tokenTransfer(xcnToken, from, to, amount);
-}
+};
 
 const exchangeMdtForGm = async (sender, amount) => {
     let exchangeTx = await mdtToken.transferAndCall(mdtExchangeContract.address, (Math.pow(10, 18) * amount).toString(), 0x0, {from: sender});
     // console.log(exchangeTx);
     return exchangeTx;
-}
+};
 
 const exchangeGmForXcn = async (sender, amount) => {
     let exchangeTx = await gmToken.transferAndCall(xcnExchangeContract.address, (Math.pow(10, 18) * amount).toString(), {from: sender});
     // console.log(exchangeTx);
     return exchangeTx;
-}
+};
 
 const exchangeXcnForGm = async (sender, amount) => {
     let approveTx = await xcnToken.approve(xcnExchangeContract.address, (Math.pow(10, 18) * amount).toString(), {from: sender});
@@ -104,7 +107,7 @@ const exchangeXcnForGm = async (sender, amount) => {
     // console.log(exchangeTx);
 
     return exchangeTx;
-}
+};
 
 const checkBalance = async (address) => {
     let ethBalance = await eth.getBalance(address);
@@ -123,7 +126,12 @@ const checkBalance = async (address) => {
         MDT: mdtBalance,
         XCN: xcnBalance
     };
-}
+};
+
+const tokenRecover = async (exchangeContract, token, amount, operator) => {
+    let tx = await exchangeContract.recoverToken(token, (Math.pow(10, 18) * amount).toString(), { from: operator });
+    return tx;
+};
 
 const transactions = {
     gmTransfer: gmTransfer,
@@ -132,6 +140,7 @@ const transactions = {
     exchangeMdtForGm: exchangeMdtForGm,
     exchangeXcnForGm: exchangeXcnForGm,
     exchangeGmForXcn: exchangeGmForXcn,
+    tokenRecover: tokenRecover,
     checkBalance: checkBalance
 }
 
