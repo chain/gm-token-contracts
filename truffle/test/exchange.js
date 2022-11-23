@@ -110,7 +110,7 @@ contract('Exchange', (accounts) => {
         }
     });
 
-    it('Burning GM should be rewarded with equivalent XCN', async () => {
+    it('Burning GM should be exchanged for equivalent XCN', async () => {
         let userBalancesBefore = await checkBalance(user);
         let contractBalancesBefore = await checkBalance(xcnExchangeContract.address);
 
