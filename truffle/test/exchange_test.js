@@ -38,7 +38,7 @@ contract('Test cases for token & token exchange contract interactions', (account
         }
     });
 
-    it('Burning GM should be rewarded with equivalent XCN', async () => {
+    it('Burning GM should be exchanged for equivalent XCN', async () => {
         let userBalancesBefore = await checkBalance(user);
         let contractBalancesBefore = await checkBalance(contractInstances.xcnExchangeContract.address);
 
@@ -57,7 +57,7 @@ contract('Test cases for token & token exchange contract interactions', (account
         assert.equal(Number(contractBalancesBefore.XCN) - Number(contractBalancesAfter.XCN), Math.pow(10, 18) * amount, 'Contract should decrease ' + amount + ' XCN');
     });
 
-    it('Depositing XCN to Exchange contract should be rewarded with equivalent newly-minted GM', async () => {
+    it('Depositing XCN to Exchange contract should mint equivalent amount of GM', async () => {
         let userBalancesBefore = await checkBalance(user);
         let contractBalancesBefore = await checkBalance(contractInstances.xcnExchangeContract.address);
 
