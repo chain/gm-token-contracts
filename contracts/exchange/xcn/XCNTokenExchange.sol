@@ -71,7 +71,7 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
         address from,
         uint256 value,
         bytes calldata data
-    ) external virtual override returns (bytes4) {
+    ) external override returns (bytes4) {
         require(_xcnOutflowEnabled, "XCNTokenExchange: It's disabled to exchange GM for XCN");
         require(msg.sender == address(gmToken), "XCNTokenExchange: Only accept GM token");
         _gmTokenReceived(operator, from, value, data);
@@ -85,7 +85,7 @@ contract XCNTokenExchange is Initializable, IERC1363Receiver, ERC165Upgradeable,
         emit GMTokenReceived(operator, from, value, data);
     }
 
-    function exchangeForGM(uint256 amount) external virtual whenNotPaused nonReentrant {
+    function exchangeForGM(uint256 amount) external whenNotPaused nonReentrant {
         xcnToken.safeTransferFrom(msg.sender, address(this), amount);
         gmToken.mint(address(msg.sender), amount);
 
