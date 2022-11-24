@@ -1,5 +1,8 @@
 const truffleAssert = require('truffle-assertions');
+const { upgradeProxy } = require("@openzeppelin/truffle-upgrades");
 const { setup } = require('./contract-interaction');
+const MDTExchangeV2 = artifacts.require('MDTTokenExchangeV2');
+const XCNExchangeV2 = artifacts.require('XCNTokenExchangeV2');
 
 contract('Test cases for upgradeable contracts', (accounts) => {
     const env = {
@@ -20,7 +23,11 @@ contract('Test cases for upgradeable contracts', (accounts) => {
     const exchangeXcnForGm = environment.transactions.exchangeXcnForGm;
     const checkBalance = environment.transactions.checkBalance;
 
+    const rate = 2; // pre-defined in V2 token exchange contract
+
     let contractInstances;
+    let mdtExchangeContract2;
+
 
     beforeEach('Basic setup', async () => {
         contractInstances = await environment.contractInstances.loadAll();
@@ -36,6 +43,45 @@ contract('Test cases for upgradeable contracts', (accounts) => {
         } catch (ex) {
             assert.ok(false, 'Token transfer transaction is reverted');
         }
+    });
+
+    it('Should be able to swapping MDT for equivalent pre-deposited GM', async () => {
+        let userBalancesBefore = await checkBalance(user);
+        let contractBalancesBefore = await checkBalance(contractInstances.mdtExchangeContract.address);
+
+        let amount = 10;
+        await exchangeMdtForGm(user, amount);
+        console.log(user, 'send', amount, 'MDT to', contractInstances.mdtExchangeContract.address, 'to exchange GM');
+        let userBalancesAfter = await checkBalance(user);
+        let contractBalancesAfter = await checkBalance(contractInstances.mdtExchangeContract.address);
+
+        assert.equal(Number(userBalancesBefore.MDT) - Number(userBalancesAfter.MDT), Math.pow(10, 18) * amount, 'User should loss ' + amount + ' XCN');
+
+        assert.equal(Number(userBalancesAfter.GM) - Number(userBalancesBefore.GM), Math.pow(10, 18) * amount, 'User should earn ' + amount + ' GM');
+    });
+
+    it('Should be able to upgrade MDT exchange contract', async () => {
+        try {
+            mdtExchangeContract2 = await upgradeProxy(contractInstances.mdtExchangeContract, MDTExchangeV2);
+            console.log('Proxy', contractInstances.mdtExchangeContract.address, 'has upgraded its implementation');
+        } catch (ex) {
+            assert.ok(false, 'The transaction upgrades implementation is reverted');
+        }
+    });
+
+    it('Should be able to swapping MDT for pre-deposited GM in rate pre-defined after upgraded to new implementation', async () => {
+        let userBalancesBefore = await checkBalance(user);
+        let contractBalancesBefore = await checkBalance(contractInstances.mdtExchangeContract.address);
+
+        let amount = 10;
+        await exchangeMdtForGm(user, amount);
+        console.log(user, 'send', amount, 'MDT to', contractInstances.mdtExchangeContract.address, 'to exchange GM');
+        let userBalancesAfter = await checkBalance(user);
+        let contractBalancesAfter = await checkBalance(contractInstances.mdtExchangeContract.address);
+
+        assert.equal(Number(userBalancesBefore.MDT) - Number(userBalancesAfter.MDT), Math.pow(10, 18) * amount, 'User should loss ' + amount + ' XCN');
+
+        assert.equal(Number(userBalancesAfter.GM) - Number(userBalancesBefore.GM), Math.pow(10, 18) * amount * rate, 'User should earn ' + amount * rate + ' GM');
     });
 
 });
