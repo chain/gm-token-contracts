@@ -44,11 +44,11 @@ contract MDTTokenExchange is
 
         require(
             address(_gmToken) != address(0),
-            "GMTokenExchange: gmToken is zero address"
+            "MDTTokenExchange: gmToken is zero address"
         );
         require(
             address(_mdtToken) != address(0),
-            "GMTokenExchange: mdtToken is zero address"
+            "MDTTokenExchange: mdtToken is zero address"
         );
         gmToken = _gmToken;
         mdtToken = _mdtToken;
@@ -58,7 +58,7 @@ contract MDTTokenExchange is
         address sender,
         uint amount,
         bytes calldata data
-    ) external override returns (bool success) {
+    ) external override virtual returns (bool success) {
         require(msg.sender == address(mdtToken), "MDTTokenExchange: Only accept MDT token");
 
         _mdtTokenReceived(sender, amount, data);

@@ -6,27 +6,25 @@ import "../exchange/xcn/XCNTokenExchange.sol";
 
 contract XCNTokenExchangeV2 is XCNTokenExchange {
 
-    uint256 rate;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    function initialize(
-        Mintable _gmToken,
-        IERC20Upgradeable _xcnToken,
-        bool xcnOutflowEnabled_
-    ) override initializer public {
-        rate = 2;
+    function rate() public pure returns (uint256) {
+        return 2;
     }
 
-    function _gmTokenReceived(address operator, address from, uint256 value, bytes memory data) internal override whenNotPaused nonReentrant {
-        gmToken.burn(value);
-        xcnToken.safeTransfer(from, value / rate);
-
-        emit GMTokenReceived(operator, from, value, data);
+    function onTransferReceived(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external pure override returns (bytes4) {
+        revert("XCNTokenExchangeV2: GM cannot be used for exchanging anymore");
     }
 
     function exchangeForGM(uint256 amount) external override whenNotPaused nonReentrant {
         xcnToken.safeTransferFrom(msg.sender, address(this), amount);
-        gmToken.mint(address(msg.sender), amount * rate);
+        gmToken.mint(address(msg.sender), amount * rate());
 
-        emit ExchangeForGM(msg.sender, amount * rate);
+        emit ExchangeForGM(msg.sender, amount * rate());
     }
 }

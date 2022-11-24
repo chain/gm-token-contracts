@@ -6,17 +6,26 @@ import "../exchange/mdt/MDTTokenExchange.sol";
 
 contract MDTTokenExchangeV2 is MDTTokenExchange {
 
-    uint256 rate;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    function initialize (
-        IERC20Upgradeable _gmToken,
-        IERC677 _mdtToken
-    ) override initializer public {
-        rate = 2;
+    function rate() public pure returns (uint256) {
+        return 2;
     }
 
-    function _mdtTokenReceived(address from, uint256 amount, bytes memory data) internal whenNotPaused nonReentrant {
-        gmToken.safeTransfer(from, amount * rate);
+    function onTokenTransfer(
+        address sender,
+        uint amount,
+        bytes calldata data
+    ) external override returns (bool success) {
+        require(msg.sender == address(mdtToken), "MDTTokenExchangeV2: Only accept MDT token");
+
+        _mdtTokenReceivedV2(sender, amount, data);
+
+        return true;
+    }
+
+    function _mdtTokenReceivedV2(address from, uint256 amount, bytes memory data) internal whenNotPaused nonReentrant {
+        gmToken.safeTransfer(from, amount * rate());
 
         emit MDTTokenReceived(from, amount, data);
     }
