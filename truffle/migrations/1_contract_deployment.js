@@ -15,8 +15,8 @@ module.exports = (deployer, network, accounts) => {
     let mdtAdmin = accounts[1];
     let gmAdmin = deployGMWithProxy ? admin : accounts[2];
     let xcnAdmin = accounts[3];
-    let mdtExchangeAdmin = accounts[4];
-    let xcnExchangeAdmin = accounts[5];
+    let mdtExchangeAdmin = accounts[0]; // non-upgradeable contract should be accounts[4];
+    let xcnExchangeAdmin = accounts[0]; // non-upgradeable contract should be accounts[5];
 
     let deployGmContract = () => {
         let contractOwner = accounts[2];
